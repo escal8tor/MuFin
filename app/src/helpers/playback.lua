@@ -1,0 +1,106 @@
+---@diagnostic disable: invisible
+local config   = require "src.external.config"
+local client   = require "src.client"
+local json     = require "src.external.json"
+local nativefs = require "src.external.nativefs"
+
+local function getSubtitles(itemId, source)
+    local args = ""-- string.format(" --sid=%d", math.max(source.DefaultSubtitleStreamIndex or 0, 0))
+    local path = "data/playback/subtitles"
+
+    if not nativefs.getInfo(path) then
+        nativefs.createDirectory(path)
+    end
+
+    for _,stream in ipairs(source.MediaStreams) do
+
+        if stream.SupportsExternalStream
+            and stream.Type == "Subtitle"
+            and stream.DeliveryMethod == "External"
+        then
+            local subpath = client.subtitle:downloadSubtitle(itemId, source, stream, path)
+
+            if subpath then
+                args = args.." --sub-file="..subpath
+            end
+        end
+    end
+
+    return args
+end
+
+local function getAttachments(source)
+    if not source.MediaAttachments then return "" end
+    local path = "data/playback/attachments"
+
+    if not nativefs.getInfo(path) then
+        nativefs.createDirectory(path)
+    end
+
+    for _,attachment in ipairs(source.MediaAttachments) do
+
+        if attachment.DeliveryUrl ~= nil then
+	    client.video:getAttachment(attachment, path)
+    	end
+    end
+
+    return "--sub-fonts-dir='"..path.."'"
+end
+
+local function play(args)
+    love.window.setMode(1, 1, {borderless = true})
+    local deviceProfile = json.decode(nativefs.read("res/static/device_profile.json"))
+    local path = "data/playback"
+    local cmdline
+
+    nativefs.createDirectory(path)
+
+    ::force_transcode::
+    local info = client.media:getPostedPlaybackInfo( args.itemId, {
+        AutoOpenLiveStream = true,
+        DeviceProfile = deviceProfile,
+        EnableTranscoding = true
+    }):decode()
+
+    for _, source in ipairs(info.MediaSources) do
+
+        if (args.static or source.SupportsDirectStream or source.SupportsDirectPlay) and not args.transcode then
+            -- Construct url for direct playback
+            cmdline = string.format(
+                "res/scripts/mpv_launch.sh '%s'",
+                client.video:getVideoStreamUrl( args.itemId, {  static = "true" } )
+            )
+
+        else
+
+            if source.TranscodingUrl then
+                cmdline = string.format(
+                    "res/scripts/mpv_launch.sh '%s' %s %s",
+                    client.session.host..source.TranscodingUrl,
+                    getSubtitles(args.itemId, source),
+                    getAttachments(source)
+                )
+
+            elseif deviceProfile.DirectPlayProfiles then
+                deviceProfile.DirectPlayProfiles = {}
+                goto force_transcode
+
+            else
+                goto cleanup
+            end
+        end
+
+        -- nativefs.write("data/command.txt", cmdline)
+        break
+    end
+
+    if cmdline then
+        os.execute(cmdline)
+    end
+
+    ::cleanup::
+    os.execute("rm -rf "..path)
+    love.window.setMode(W_WIDTH, W_HEIGHT, { resizable = true })
+end
+
+return play
