@@ -1,7 +1,6 @@
+---@diagnostic disable: return-type-mismatch, need-check-nil, assign-type-mismatch
 local flux = require "src.external.flux"
 
----@diagnostic disable: return-type-mismatch, need-check-nil
----
 --- Badr
 ---
 --- Copyright (c) 2024 Nabeel20
@@ -23,13 +22,16 @@ local flux = require "src.external.flux"
 --- @field height    integer  Height of object
 --- @field width     integer  Width of object
 --- @field tmg       number   Margin top
---- @field bmg       number   Margin bottom
+--- @field bmg       number   Margin bottomundefined-field,
 --- @field lmg       number   Margin left
 --- @field rmg       number   Margin right
 --- @field visible   boolean  Toggles draw logic
 --- @field focusable boolean  Controls whether object can be focused
 --- @field focused   boolean  Whether object is focused
 --- @field root      badr     Reference to root component
+--- @field row       boolean? Set if children are arranged horizontally
+--- @field column    boolean? Set if children are arranged vertically
+--- @field disabled  boolean  Toggles functionality
 ---
 --- @field focusedElement badr?    Currently focused element (only set for root component)
 ---

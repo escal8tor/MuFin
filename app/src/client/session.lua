@@ -11,6 +11,9 @@ local HDR_PATH = 'data/header'
 --#region response
 
 --- @class response
+--- 
+--- @field ok   boolean Response status.
+--- @field path string  Path to response data.
 local response = {}
 response.__index = response
 

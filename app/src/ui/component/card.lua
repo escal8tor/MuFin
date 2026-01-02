@@ -1,14 +1,7 @@
 local badr   = require "src.ui.component.badr"
--- local button = require "src.ui.component.button"
--- local config = require "src.config"
 local header = require "src.ui.component.header"
--- local image  = require "src.ui.component.image"
--- local scroll = require "src.ui.component.scroll"
--- local select = require "src.ui.component.select"
--- local text   = require "src.ui.component.text"
 local play   = require "src.helpers.playback"
 local ui     = require "src.ui.scene"
--- local utils  = require "src.utils"
 
 --- @class card:badr
 --- 
@@ -24,99 +17,6 @@ end
 function card:__add(child)
     return badr.__add(self, child)
 end
-
--- function card:downloadMenu()
---     local items = {}
-
---     items[#items+1] = button {
---         text = "All",
---         font = "normal",
---         action = function ()
---             ui.scenes:current():removeLayer()
---             self.layer = nil
---         end
---     }
-
---     items[#items+1] = button {
---         text = "New",
---         font = "normal",
---         action = function ()
---             ui.scenes:current():removeLayer()
---             self.layer = nil
---         end
---     }
-
---     items[#items+1] = button {
---         text = "Unwatched",
---         font = "normal",
---         action = function ()
---             ui.scenes:current():removeLayer()
---             self.layer = nil
---         end
---     }
-
---     items[#items+1] = button {
---         text = "Select",
---         font = "normal",
---         action = function ()
---             ui.scenes:current():removeLayer()
---             self.layer = nil
---         end
---     }
-
---     local inst = select.list(items, { title = "Download" })
---     self.layer = badr:root {
---         width = inst.width,
---         height = inst.height
---     }
---     self.layer = self.layer + inst
---     self.layer:focusFirstElement()
---     ui.scenes:current():insertLayer(self.layer)
-
---     header.reset()
---     header.append("DP", "Nav.")
---     header.append("A", "Go")
---     header.append("B", "Back")
---     header.updatePosition()
--- end
-
--- function card:contextMenu()
---     local items = {}
-
---     if self.src.Type == "Movie" or
---        self.src.Type == "Episode" or
---        self.src.Type == "Series" or
---        self.src.Type == "Season" then
---         items[#items+1] = button {
---             text = "Download",
---             font = "normal",
---             action = function ()
---                 ui.scenes:current():removeLayer()
---                 self.layer = nil
-
---                 if self.src.Type == "Series" or self.src.Type == "Season" then
---                     self:downloadMenu()
---                 end
---             end
---         }
---     end
-
---     if #items > 0 then
---         local inst = select.list(items)
---         self.layer = badr:root {
---             width = inst.width,
---             height = inst.height
---         }
---         self.layer = self.layer + inst
---         self.layer:focusFirstElement()
---         ui.scenes:current():insertLayer(self.layer)
-
---         header.reset()
---         header.append("A", "Go")
---         header.append("B", "Back")
---         header.updatePosition()
---     end
--- end
 
 function card:onKeyPress(key)
 
@@ -146,9 +46,6 @@ function card:onKeyPress(key)
             }
         end
 
-    -- elseif key == "a" and self.src.Type ~= "CollectionFolder" then
-    --     self:contextMenu()
-
     elseif key == "c" then
         ui.stack:push("info", self.src)
 
@@ -159,11 +56,6 @@ end
 
 function card:onFocus()
     header.reset()
-
-    -- if self.src.Type ~= "CollectionFolder" then
-    --     header.append("Y", "Menu")
-    -- end
-
     header.append("X", "Info")
     header.append("A", self.src.IsFolder and "Open" or "Play")
     header.append("B", (#ui.stack.active > 1) and "Back" or "Quit")
@@ -201,18 +93,6 @@ function card:onUpdate()
 end
 
 function card:draw()
-
-    -- if self.layer then
-    --     local img = self.children[self.image]
-    --     local x,y = love.graphics.transformPoint(img.x,img.y)
-    --     x = x + (img.width/2) - (self.layer.width/2) - 3
-    --     y = y + (img.height/2) - (self.layer.height/2) - 3
-
-    --     if self.layer.x ~= x or self.layer.y ~= y then
-    --         self.layer:setPosition(x, y)
-    --     end
-    -- end
-
     badr.draw(self)
 end
 
