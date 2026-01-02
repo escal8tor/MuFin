@@ -101,23 +101,29 @@ function input.getBtnIcon(value)
 end
 
 local header = {
-  layout_left = badr:root { row = true, gap = 10 },
-  layout_right = badr:root { row = true, gap = 10 },
-  width = 0,
-  height = 0
+    layout_left = badr:root { row = true, gap = 10 },
+    layout_right = badr:root { row = true, gap = 10 },
+    width = 0,
+    height = 0
 }
 
 local logo, logo_scale
 
 function header.load()
-  logo = love.graphics.newImage("res/image/jellyfin_icon.png")
-  header.width = W_WIDTH
-  header.height = W_HEIGHT / 12
-  logo_scale = (header.height - 24) / logo:getHeight()
+    logo = love.graphics.newImage("res/image/jellyfin_icon.png")
+    header.width = W_WIDTH
+    header.height = W_HEIGHT / 12
+    local alt = 24
+
+    if W_HEIGHT == 480 then
+        alt = 16
+    end
+
+    logo_scale = (header.height - alt) / logo:getHeight()
 end
 
 function header.reset()
-  header.layout_left = badr:root { row = true, gap = 15 }
+    header.layout_left = badr:root { row = true, gap = 15 }
 end
 
 --- Add help text for a button.
@@ -125,16 +131,23 @@ end
 --- @param txt string text to display
 function header.append(btn, txt)
     local id = btn:lower()
+    local off1, off2
+
+    if W_HEIGHT == 480 then
+        off1, off2 = 0, 0
+    else
+        off1, off2 = 2, -4
+    end
 
     header.layout_left = header.layout_left + (
         badr {
-            y = header.layout_left.y + 2,
+            y = header.layout_left.y + off1,
             id = id.."_hint",
             row = true,
             gap = 5
         }
         + text {
-            y = header.layout_left.y - 4,
+            y = header.layout_left.y + off2,
             id = id.."_sym",
             text = input.getBtnIcon(btn).sym,
             font = "prompt",
@@ -168,12 +181,18 @@ function header.updatePosition(xPos, yPos)
     header.layout_left:updatePosition(xPos, yPos)
 end
 
+local y = 12
+
+if W_HEIGHT == 480 then
+    y = 8
+end
+
 function header:draw()
     love.graphics.setColor(configs.theme:color("HEADER","BACKGROUND"))
     love.graphics.rectangle("fill", 0, 0, header.width, header.height)
     header.layout_left:draw()
     love.graphics.setColor(configs.theme:color("HEADER","LOGO"))
-    love.graphics.draw(logo, 20, 12, 0, logo_scale, logo_scale)
+    love.graphics.draw(logo, 20, y, 0, logo_scale, logo_scale)
 end
 
 return header

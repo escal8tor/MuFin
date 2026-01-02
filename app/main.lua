@@ -1,36 +1,15 @@
 ---@diagnostic disable: param-type-mismatch
 require "src.helpers.globals"
 
-local ui, image
+local image = require "src.ui.component.image"
 local log   = require "src.helpers.log"
-local utils = require "src.external.utils"
-
--- local font = love.graphics.newFont("assets/fonts/NotoSans.ttf", 16)
--- love.graphics.setFont(font)
+local ui    = require "src.ui.scene"
 
 function love.load(args)
     log.info("### START ###")
-
-    if #args > 0 then
-        local res = args[1]
-
-        if res then
-            _G.resolution = res
-            res = utils.split(res, "x")
-            -- Set window resolution.
-            love.window.setMode(
-                tonumber(res[1]) or 640,
-                tonumber(res[2]) or 480
-            )
-        end
-    end
-
-
-    W_WIDTH, W_HEIGHT = love.window.getMode()
-    log.debug(string.format("resolution set to %dx%d", W_WIDTH, W_HEIGHT))
-
-    image = require "src.ui.component.image"
-    ui    = require "src.ui.scene"
+    love.window.setMode(W_WIDTH, W_HEIGHT)
+    log.debug("resolution set to %dx%d", W_WIDTH, W_HEIGHT)
+    log.debug("Device name: %s", DEVICE_NAME)
     ui.stack:init("splash")
 end
 

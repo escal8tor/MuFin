@@ -2,7 +2,6 @@
 local _url     = require "src.external.url"
 local json     = require "src.external.json"
 local log      = require "src.helpers.log"
-local muos     = require "src.helpers.muos"
 local nativefs = require "src.external.nativefs"
 local utils    = require "src.external.utils"
 
@@ -64,7 +63,7 @@ session.__index = session
 --- @return session session Initialized session
 function session:new(data)
     local proto = {
-        device  = data.device  or muos.getBoardName(),
+        device  = data.device  or DEVICE_NAME,
         host    = data.host,
         id      = data.did     or utils.guid(),
         name    = data.name    or "MuFin",

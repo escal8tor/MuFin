@@ -13,15 +13,13 @@ fi
 echo app >/tmp/act_go
 
 SETUP_SDL_ENVIRONMENT
-SCREEN_RESOLUTION="$(GET_VAR device mux/width)x$(GET_VAR device mux/height)"
 RUN_PATH="$(GET_VAR "device" "storage/rom/mount")/MUOS/application/MuFin/app"
-
-export LD_LIBRARY_PATH="$RUN_PATH/bin/libs.aarch64/love/:$LD_LIBRARY_PATH"
 
 cd "$RUN_PATH" || exit 1
 SET_VAR "system" "foreground_process" "love"
 
 $GPTOKEYB2 "love" -c "$RUN_PATH/res/input/gp2k_client.ini" &
-./bin/love . "$SCREEN_RESOLUTION"
+export LD_LIBRARY_PATH="$RUN_PATH/bin/libs.aarch64/love/:$LD_LIBRARY_PATH"
+./bin/love .
 
 kill -9 $(pidof gptokeyb2)

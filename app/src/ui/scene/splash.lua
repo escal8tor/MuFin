@@ -1,5 +1,6 @@
 local config = require "src.external.config"
 local flux   = require "src.external.flux"
+local font   = require "src.ui.component.font"
 local ui     = require "src.ui.scene"
 
 --#region helpers
@@ -75,8 +76,7 @@ local text = {}
 text.__index = text
 
 function text.load()
-    local font = love.graphics.newFont("res/font/Quicksand.ttf", 72)
-    text.data = love.graphics.newText(font, "Jellyfin")
+    text.data = love.graphics.newText(font.logo, "Jellyfin")
     text.w = text.data:getWidth()
     text.h = text.data:getHeight()
     text.x = W_WIDTH/2

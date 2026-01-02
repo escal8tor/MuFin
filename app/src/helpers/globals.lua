@@ -1,4 +1,5 @@
 local nativefs = require "src.external.nativefs"
+local muos     = require "src.helpers.muos"
 
 local sem_ver = {
   major = 0,
@@ -24,3 +25,6 @@ _G.device_resolutions = {
   "1024x768",
   "1280x720",
 }
+
+W_WIDTH, W_HEIGHT = muos.getResolution()
+DEVICE_NAME = muos.getDeviceName()

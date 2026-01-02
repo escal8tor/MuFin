@@ -1,10 +1,19 @@
 local client = require "src.client"
 local config = require "src.external.config"
+local font   = require "src.ui.component.font"
 local log    = require "src.helpers.log"
 local ui     = require "src.ui.scene"
 
-local font1 = love.graphics.newFont("res/font/Quicksand.ttf", 96)
-local font2 = love.graphics.newFont("res/font/Quicksand.ttf", 32)
+local res1, res2
+
+if W_HEIGHT == 480 then
+    res1, res2 = 65, 20
+else
+    res1, res2 = 96, 32
+end
+
+local font1 = love.graphics.newFont("res/font/Quicksand.ttf", res1)
+local font2 = love.graphics.newFont("res/font/Quicksand.ttf", res2)
 
 --- @type love.Text, number, number, number, number
 local code, code_x, code_y, code_ox, code_oy
@@ -42,7 +51,7 @@ function login:load(data)
 
             if not client.connected then
                 log.debug("Initiated QuickConnect to %s.", client.session.host)
-                code = love.graphics.newText(font1, client.qcData.code)
+                code = love.graphics.newText(font.logo_large, client.qcData.code)
                 local w, h = code:getDimensions()
                 code_ox, code_oy = w/2, h/2
                 code_x, code_y = W_WIDTH/2, W_HEIGHT/2
@@ -82,7 +91,7 @@ function login:draw()
     love.graphics.clear(config.theme:color("SPLASH", "BACKGROUND"))
     love.graphics.setColor(config.theme:color("SPLASH", "LOGO_TEXT"))
     love.graphics.draw(code, code_x, code_y, 0,  1, 1, code_ox, code_oy)
-    love.graphics.printf(instructions, font2, inst_x, inst_y, inst_w, "center")
+    love.graphics.printf(instructions, font.logo_small, inst_x, inst_y, inst_w, "center")
     love.graphics.pop()
 end
 
