@@ -8,6 +8,13 @@ local text   = require "src.ui.component.text"
 local ui     = require "src.ui.scene"
 local utils  = require "src.external.utils"
 
+local cardWidth
+
+if W_WIDTH == 1280 then
+    cardWidth = (W_WIDTH - 82) / 4
+else
+    cardWidth = (W_WIDTH - 62) / 3
+end
 
 local function libraryGrid(itemData)
     local menu = grid {
@@ -19,9 +26,9 @@ local function libraryGrid(itemData)
     }
 
     for _,item in ipairs(itemData.Items) do
-        --- calculate dimensions for item's primary image
+        -- Dimensions for item's primary image.
         local width, height = utils.dimensions {
-            width = (W_WIDTH - 62) / 3,
+            width = cardWidth,
             aspect = 2/3,
             -- scale = 3/5
         }

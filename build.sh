@@ -61,7 +61,7 @@ if [ -n "$GLYPH_SRC" ]; then
     cp "$GLYPH_SRC" "$WORKDIR/MuFin/glyph/"
 
     # Convert per-resolution icons into their respective folders.
-    for res in 640x480:21x21 720x480:21x21 720x720:36x36 1024x768:36x36; do 
+    for res in 640x480:21x21 720x480:21x21 720x720:24x24 1280x720:24x24 1024x768:36x36; do 
         IFS=: read -r res size <<< $res
         mkdir -p "$WORKDIR/MuFin/glyph/$res"
         convert -resize $size "$GLYPH_SRC" "$WORKDIR/MuFin/glyph/$res/mufin.png"

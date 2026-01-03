@@ -85,8 +85,17 @@ local function latest(name, id, data)
     }
 
     for _, item in ipairs(data) do
+        local aspect
+
+        if item.Type == "Episode" then
+            aspect = 4/3
+        else
+            aspect = 2/3
+        end
+
+
         local width, height = utils.dimensions {
-            aspect = 2/3,
+            aspect = aspect,
             scale = 3/5
         }
 
@@ -106,7 +115,7 @@ local function latest(name, id, data)
             }
             + text {
                 id = "title",
-                text = item.Name,
+                text = utils.formatItemTitle(item),
                 width = width,
                 font = "normal",
                 align = "center"

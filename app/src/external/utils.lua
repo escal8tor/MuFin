@@ -315,26 +315,48 @@ function utils.to_seconds(ticks)
     return math.floor(ticks / 10000000)
 end
 
---- Format year range for jellyfin item
+--- Format card subtitle for Jellyfin item.
 --- 
 --- @param item table Jellyfin item
 --- 
 --- @return string subtitle for item
 function utils.formatItemSubtitle(item)
-    local subtitle = tostring(item.ProductionYear)
+    local subtitle = ""
 
-    if item.Status == "Continuing" then
-        subtitle = subtitle.." - Present"
+    if item.Type == "MusicAlbum" and item.AlbumArtist ~= nil then
+        subtitle = item.AlbumArtist
 
-    elseif item.EndDate then
-        local endYear = string.match(item.EndDate, "^(%d*)")
+    else
+        subtitle = tostring(item.ProductionYear)
 
-        if endYear and endYear ~= subtitle then
-            subtitle = subtitle.." - "..endYear
+        if item.Status == "Continuing" then
+            subtitle = subtitle.." - Present"
+
+        elseif item.EndDate then
+            local endYear = string.match(item.EndDate, "^(%d*)")
+
+            if endYear and endYear ~= subtitle then
+                subtitle = subtitle.." - "..endYear
+            end
         end
     end
 
     return subtitle
+end
+
+--- Format card title for Jellyfin item.
+--- 
+--- @param item table Jellyfin item
+--- 
+--- @return string title for item
+function utils.formatItemTitle(item)
+    local title = item.Name
+
+    if item.Type == "Episode" then
+        title = string.format("S%d:E%d - %s", item.ParentIndexNumber, item.IndexNumber, item.Name)
+    end
+
+    return title
 end
 
 --- Get icon name for item.
