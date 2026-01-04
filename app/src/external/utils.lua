@@ -308,7 +308,7 @@ function utils.dimensions(kwds)
 end
 
 function utils.to_minutes(ticks)
-    return math.floor(ticks / 10000000 / 60 )
+    return math.floor(ticks / 10000000 / 60)
 end
 
 function utils.to_seconds(ticks)
@@ -321,6 +321,7 @@ end
 --- 
 --- @return string subtitle for item
 function utils.formatItemSubtitle(item)
+    if item.Type == "Episode" then return "" end
     local subtitle = ""
 
     if item.Type == "MusicAlbum" and item.AlbumArtist ~= nil then
