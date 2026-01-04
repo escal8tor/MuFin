@@ -185,7 +185,6 @@ end
 
 function info:enter(data)
     header.reset()
-    header.append("DP", "Nav.")
     header.append("B", "Back")
     header.updatePosition()
 end
