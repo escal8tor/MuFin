@@ -80,19 +80,19 @@ function library:new()
 end
 
 function library:load(data)
-    local response = client.item:getItems {
-        SortBy = "SortName",
-        SortOrder = "Ascending",
-        Fields = "PrimaryImageAspectRatio",
-        ParentId = data.itemId
-    }
+    local items = utils.preq(function()
+        return client.item:getItems({
+            SortBy = "SortName",
+            SortOrder = "Ascending",
+            Fields = "PrimaryImageAspectRatio",
+            ParentId = data.itemId
+        }):decode()
+    end)
 
-    if response.ok then
-        local layer = badr:root { row = true } + libraryGrid(response:decode())
-        layer:updatePosition(18, header.height + 20)
-        layer:focusFirstElement()
-        self:insertLayer(layer)
-    end
+    local layer = badr:root { row = true } + libraryGrid(items)
+    layer:updatePosition(18, header.height + 20)
+    layer:focusFirstElement()
+    self:insertLayer(layer)
 end
 
 return library

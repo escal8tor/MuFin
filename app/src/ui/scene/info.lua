@@ -6,6 +6,7 @@ local scroll = require "src.ui.component.scroll"
 local select = require "src.ui.component.select"
 local text   = require "src.ui.component.text"
 local ui     = require "src.ui.scene"
+local utils  = require "src.external.utils"
 
 --- Media stream selections
 local selected = {
@@ -25,162 +26,164 @@ function info:new()
 end
 
 function info:load(data)
-    local response = client.item:getItem(data.Id, { userId = client.session.uid })
+    local itemData = utils.preq(function ()
+        return client.item:getItem(
+            data.Id,
+            { userId = client.session.uid }
+        ):decode()
+    end)
 
-    if response.ok then
-        local itemData = response:decode()
-        local layer = badr:root {}
-        local base = scroll {
-            type = "vt",
-            width = W_WIDTH - 0,
-            height = W_HEIGHT - header.height - 40,
-            gap = 30,
-            bias = "center",
-            lockFocus = true,
-        }
-        + text {
-            id = "title",
-            text = itemData.Name,
+    local layer = badr:root {}
+    local base = scroll {
+        type = "vt",
+        width = W_WIDTH - 0,
+        height = W_HEIGHT - header.height - 40,
+        gap = 30,
+        bias = "center",
+        lockFocus = true,
+    }
+    + text {
+        id = "title",
+        text = itemData.Name,
+        width = W_WIDTH - 40,
+        font = "large",
+        align = "left"
+    }
+
+    if itemData.MediaStreams then
+        local streams = {}
+
+        for _, stream in ipairs(itemData.MediaStreams) do
+
+            if streams[stream.Type] == nil then
+                streams[stream.Type] = {}
+            end
+
+            if stream.IsDefault then
+                selected.streams[stream.Type] = stream.Index
+            end
+
+            streams[stream.Type][#streams[stream.Type]+1] = button {
+                stype = stream.Type,
+                index = stream.Index,
+                isDefault = stream.IsDefault,
+                text = stream.DisplayTitle,
+                align = "left",
+                lmg = 10,
+                rmg = 10,
+                onFocus = function (s)
+                    selected.streams[s.stype] = s.index
+                end,
+            }
+        end
+
+        for i, label in ipairs({"Video","Audio","Subtitle"}) do
+
+            if streams[label] ~= nil then
+
+                if i > 1 then
+                    base.gap = 5
+                end
+
+                local streamSelect = select.hzScr(
+                    streams[label], { width =  W_WIDTH - 140 }
+                )
+
+                base = base + (
+                    badr { row = true, gap = 0 }
+                    + text { text = label, width = 100 }
+                    + streamSelect
+                )
+            end
+        end
+
+        base.gap = 30
+    end
+
+    if #itemData.Taglines > 0 then
+        base = base + text {
+            id = "tagline",
+            text = itemData.Taglines[1],
             width = W_WIDTH - 40,
-            font = "large",
+            wrap = true,
+            font = "normal",
             align = "left"
         }
+    end
 
-        if itemData.MediaStreams then
-            local streams = {}
+    if itemData.Overview then
+        base = base + text {
+            id = "overview",
+            text = itemData.Overview,
+            width = W_WIDTH - 40,
+            wrap = 8,
+            font = "normal",
+            align = "left",
+            color = "primary"
+        }
+    end
 
-            for _, stream in ipairs(itemData.MediaStreams) do
+    if #itemData.Genres > 0 then
+        local label = text {
+            text = "Genres",
+            align = "left",
+            width = 100
+        }
 
-                if streams[stream.Type] == nil then
-                    streams[stream.Type] = {}
-                end
-
-                if stream.IsDefault then
-                    selected.streams[stream.Type] = stream.Index
-                end
-
-                streams[stream.Type][#streams[stream.Type]+1] = button {
-                    stype = stream.Type,
-                    index = stream.Index,
-                    isDefault = stream.IsDefault,
-                    text = stream.DisplayTitle,
-                    align = "left",
-                    lmg = 10,
-                    rmg = 10,
-                    onFocus = function (s)
-                        selected.streams[s.stype] = s.index
-                    end,
-                }
-            end
-
-            for i, label in ipairs({"Video","Audio","Subtitle"}) do
-
-                if streams[label] ~= nil then
-
-                    if i > 1 then
-                        base.gap = 5
-                    end
-
-                    local streamSelect = select.hzScr(
-                        streams[label], { width =  W_WIDTH - 140 }
-                    )
-
-                    base = base + (
-                        badr { row = true, gap = 0 }
-                        + text { text = label, width = 100 }
-                        + streamSelect
-                    )
-                end
-            end
-
-            base.gap = 30
-        end
-
-        if #itemData.Taglines > 0 then
-            base = base + text {
-                id = "tagline",
-                text = itemData.Taglines[1],
-                width = W_WIDTH - 40,
-                wrap = true,
-                font = "normal",
-                align = "left"
+        base = base + (
+            badr {
+                row = true,
+                gap = 0
             }
-        end
-
-        if itemData.Overview then
-            base = base + text {
-                id = "overview",
-                text = itemData.Overview,
-                width = W_WIDTH - 40,
-                wrap = 8,
-                font = "normal",
+            + label
+            + text {
+                text = table.concat(itemData.Genres, ", "),
                 align = "left",
-                color = "primary"
+                color = "primary",
+                width = W_WIDTH - label.width - 40,
+                wrap = 2
             }
-        end
+        )
+    end
+
+    if #itemData.Studios > 0 then
 
         if #itemData.Genres > 0 then
-            local label = text {
-                text = "Genres",
-                align = "left",
-                width = 100
-            }
-
-            base = base + (
-                badr {
-                    row = true,
-                    gap = 0
-                }
-                + label
-                + text {
-                    text = table.concat(itemData.Genres, ", "),
-                    align = "left",
-                    color = "primary",
-                    width = W_WIDTH - label.width - 40,
-                    wrap = 2
-                }
-            )
+            base.gap = 5
         end
 
-        if #itemData.Studios > 0 then
+        local label = text {
+            text = "Studios",
+            align = "left",
+            width = 100
+        }
 
-            if #itemData.Genres > 0 then
-                base.gap = 5
-            end
+        local studios = {}
 
-            local label = text {
-                text = "Studios",
-                align = "left",
-                width = 100
-            }
-
-            local studios = {}
-
-            for _,studio in ipairs(itemData.Studios) do
-                studios[#studios+1] = studio.Name
-            end
-
-            base = base + (
-                badr {
-                    row = true,
-                    gap = 0
-                }
-                + label
-                + text {
-                    text = table.concat(studios, ", "),
-                    align = "left",
-                    color = "primary",
-                    width = W_WIDTH - label.width - 40,
-                    wrap = 2
-                }
-            )
+        for _,studio in ipairs(itemData.Studios) do
+            studios[#studios+1] = studio.Name
         end
 
-        layer = layer + base
-        layer:updatePosition(20, header.height + 20)
-        layer:focusFirstElement()
-        self:insertLayer(layer)
+        base = base + (
+            badr {
+                row = true,
+                gap = 0
+            }
+            + label
+            + text {
+                text = table.concat(studios, ", "),
+                align = "left",
+                color = "primary",
+                width = W_WIDTH - label.width - 40,
+                wrap = 2
+            }
+        )
     end
+
+    layer = layer + base
+    layer:updatePosition(20, header.height + 20)
+    layer:focusFirstElement()
+    self:insertLayer(layer)
 end
 
 function info:enter(data)

@@ -63,29 +63,27 @@ function seasons:new()
 end
 
 function seasons:load(data)
-    local response = client.show:getSeasons(
-        data.seriesId, {
-            Fields = "PrimaryImageAspectRatio",
-            enableImages = "true"
-        }
-    )
+    local itemData = utils.preq(function ()
+        return client.show:getSeasons(
+            data.seriesId, {
+                Fields = "PrimaryImageAspectRatio",
+                enableImages = "true"
+            }
+        ):decode()
+    end)
 
-    if response.ok then
-        local itemData = response:decode()
+    if #itemData.Items > 1 then
+        local layer = badr:root { row = true }
+        layer = layer + seasonScroll(itemData, data.seriesId)
+        layer:updatePosition(20, header.height + 20)
+        layer:focusFirstElement()
+        self:insertLayer(layer)
 
-        if #itemData.Items > 1 then
-            local layer = badr:root { row = true }
-            layer = layer + seasonScroll(itemData, data.seriesId)
-            layer:updatePosition(20, header.height + 20)
-            layer:focusFirstElement()
-            self:insertLayer(layer)
-
-        else
-            ui.stack:push( "episodes", {
-                seasonId = itemData.Items[1].Id,
-                seriesId = data.seriesId
-            })
-        end
+    else
+        ui.stack:push( "episodes", {
+            seasonId = itemData.Items[1].Id,
+            seriesId = data.seriesId
+        })
     end
 end
 

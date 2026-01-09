@@ -150,7 +150,7 @@ end
 --- 
 --- @return boolean connected
 function client:__completeQuickConnect(response)
-    if not response.Authenticated then return false end
+    if not (response.Authenticated and client.qcData) then return false end
     local ok
 
     ok, response = pcall(function()

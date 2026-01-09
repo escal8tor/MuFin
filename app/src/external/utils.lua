@@ -1,4 +1,4 @@
----@diagnostic disable: param-type-mismatch, redundant-return-value
+---@diagnostic disable: param-type-mismatch, redundant-return-value, return-type-mismatch
 --- MIT License
 --- 
 --- Copyright (c) [2024] [Gabriel Vale]
@@ -368,6 +368,37 @@ function utils.getIcon(itemType)
     if itemType == "Movie" or itemType == "Episode" then
         return  "play"
     end
+end
+
+--- Default error handler for `preq`.
+function utils._onFatal ()
+    love.event.push("quit")
+end
+
+--- Call API request in protected mode.
+--- 
+--- @param request fun(any): unknown    Request caller.
+--- @param onFatal (fun(any): unknown)? Fatal error handler.
+--- 
+--- @return table content Decoded response content.
+function utils.preq(request, onFatal)
+    onFatal = onFatal or utils._onFatal
+    local retry = 3
+
+    ::retry::
+    local ok, response = pcall(request)
+
+    if not ok or response == nil then
+
+        if retry <= 0 then
+            return onFatal()
+        end
+
+        retry = retry - 1
+        goto retry
+    end
+
+    return response
 end
 
 return utils

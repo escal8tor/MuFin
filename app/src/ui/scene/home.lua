@@ -3,20 +3,20 @@ local card   = require "src.ui.component.card"
 local client = require "src.client"
 local header = require "src.ui.component.header"
 local image  = require "src.ui.component.image"
+local log    = require "src.helpers.log"
 local scroll = require "src.ui.component.scroll"
 local text   = require "src.ui.component.text"
 local ui     = require "src.ui.scene"
 local utils  = require "src.external.utils"
 
+
 --#region locals
 
---- Create view component tree.
+--- Add component tree for user views.
 ---
---- @param data table Jellyfin view data
----
---- @return badr tree Component tree
-local function views(data)
-    local base = scroll {
+--- @return badr userViews Jellyfin view data
+local function getUserViews(viewData)
+    local userViews = scroll {
         type = "hz",
         id = "view_cards",
         gap = 15,
@@ -24,13 +24,13 @@ local function views(data)
         bias = "center"
     }
 
-    for _,item in ipairs(data.Items) do
+    for _,item in ipairs(viewData.Items) do
         local width, height = utils.dimensions {
             aspect = item.PrimaryImageAspectRatio,
             scale = 3/5
         }
 
-        base = base + (
+        userViews = userViews + (
             card {
                 id = item.Id,
                 src = item,
@@ -64,18 +64,18 @@ local function views(data)
             text = "My Media",
             font = "large"
         }
-        + base
+        + userViews
     )
 end
 
---- Create latest component tree.
+--- Add component tree(s) for recently added media.
 ---
 --- @param name string Source view title
 --- @param id   string Source view id
 --- @param data table  Jellyfin results for latest query
 ---
 --- @return badr tree Component tree
-local function latest(name, id, data)
+local function getRecentlyAdded(name, id, data)
     local base = scroll {
         type = "hz",
         id = id.."_latest",
@@ -92,7 +92,6 @@ local function latest(name, id, data)
         else
             aspect = 2/3
         end
-
 
         local width, height = utils.dimensions {
             aspect = aspect,
@@ -161,7 +160,10 @@ function home:load(data)
     -- client authentication is complete by this point
     image.startThread()
 
-    local layer = badr:root { row = true }
+    local viewData = utils.preq(function ()
+        return client.user:getUserViews():decode()
+    end)
+
     local menu = scroll {
         type = "vt",
         gap = 20,
@@ -169,21 +171,23 @@ function home:load(data)
         bias = "center",
     }
 
-    local viewData = client.user:getUserViews():decode()
-    menu = menu + views(viewData)
+    menu = menu + getUserViews(viewData)
 
     for _,item in ipairs(viewData.Items) do
-        local latestData = client.item:getLatestMedia({
-            parentId = item.Id,
-            limit = 24,
-            fields = "PrimaryImageAspectRatio"
-        }):decode()
-        local latestArea = latest(item.Name, item.Id, latestData)
+        local latestData = utils.preq(function ()
+            return client.item:getLatestMedia({
+                parentId = item.Id,
+                limit = 24,
+                fields = "PrimaryImageAspectRatio"
+            }):decode()
+        end)
+
+        local latestArea = getRecentlyAdded(item.Name, item.Id, latestData)
         menu = menu + latestArea
         latestArea:updatePosition(0,0)
     end
 
-    layer = layer + menu
+    local layer = badr:root { row = true } + menu
     layer:updatePosition(20, header.height + 20)
     layer:focusFirstElement()
     self:insertLayer(layer)
