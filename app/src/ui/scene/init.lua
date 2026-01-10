@@ -51,12 +51,21 @@ function scene:leave(data)
     local focus = self:focused()
     self.visible = false
 
+    self:release()
+
     if focus and focus.onFocusLost then
         focus:onFocusLost(data)
     end
 end
 
 function scene:close(data) end
+
+function scene:release()
+
+    for _,layer in ipairs(self.layers) do
+        layer:release()
+    end
+end
 
 --- Handle keypress.
 ---
@@ -262,6 +271,10 @@ end
 --- Process scene render logic.
 function stack:draw()
     self.active[#self.active]:draw()
+    -- local luaMem = collectgarbage("count") / 1024  -- MB
+    -- local stats = love.graphics.getStats()
+    -- local texMem = stats.texturememory / (1024 * 1024)  -- MB
+    -- love.graphics.print("Lua Mem: " .. luaMem .. " MB | Tex Mem: " .. texMem .. " MB", 10, 10)
 end
 
 function stack:current()

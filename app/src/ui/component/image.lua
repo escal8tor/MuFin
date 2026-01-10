@@ -241,6 +241,7 @@ end
 function image:release()
     if self.data == nil then return end
 
+    ::release::
     if self.data:release() then
         self.data = nil
         self.imgWidth = nil
@@ -249,6 +250,8 @@ function image:release()
         self.scaleY = nil
         self.originX = nil
         self.originY = nil
+    else
+        goto release
     end
 end
 

@@ -3,6 +3,7 @@ local badr   = require "src.ui.component.badr"
 local flux   = require "src.external.flux"
 local math   = require "math"
 local utils  = require "src.external.utils"
+local log    = require "src.helpers.log"
 
 --#region scroll
 
@@ -308,10 +309,14 @@ function scroll:update(dt)
 
             if i < self.vf then self.vf = i end
 
-        elseif i > self.vf then break
+        else
+            child:release()
 
-        elseif i == self.vf and self.vf < #self.children then
-            self.vf = self.vf + 1
+            if i > self.vf then break
+
+            elseif i == self.vf and self.vf < #self.children then
+                self.vf = self.vf + 1
+            end
         end
     end
 

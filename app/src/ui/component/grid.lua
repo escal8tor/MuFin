@@ -28,7 +28,6 @@ function grid:new(props)
 
     return object
 end
-local downloader = love.thread
 
 function grid:__add(other)
     assert(other or type(other) ~= "table", "Cannot add "..type(other).." object.")
@@ -122,8 +121,12 @@ function grid:update(dt)
 
             if i < self.vf then self.vf = i end
 
-        elseif i == self.vf and self.vf < #self.children then
-            self.vf = self.vf + 1
+        else
+            child:release()
+
+            if i == self.vf and self.vf < #self.children then
+                self.vf = self.vf + 1
+            end
         end
     end
 

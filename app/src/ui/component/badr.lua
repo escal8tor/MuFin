@@ -267,6 +267,16 @@ function badr:draw()
     end
 end
 
+function badr:release()
+
+    for _, child in ipairs(self.children) do
+
+        if child.release then
+            child:release()
+        end
+    end
+end
+
 --- Adds delta to object's coordinates.
 ---
 --- @param x integer Delta X.

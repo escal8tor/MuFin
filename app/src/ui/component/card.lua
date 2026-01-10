@@ -79,19 +79,6 @@ function card:onFocusLost()
     end
 end
 
-function card:onUpdate()
-
-    if not self.visible then
-
-        for _, child in ipairs(self.children) do
-
-            if child.release then
-                child.release()
-            end
-        end
-    end
-end
-
 function card:draw()
     badr.draw(self)
 end
