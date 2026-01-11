@@ -16,60 +16,6 @@ else
     cardWidth = (W_WIDTH - 62) / 3
 end
 
-local function libraryGrid(itemData)
-    local menu = grid {
-        type = "vt",
-        width = W_WIDTH - 0,
-        height = W_HEIGHT - header.height - 40,
-        gap = 15,
-        bias = "center"
-    }
-
-    for _,item in ipairs(itemData.Items) do
-        -- Dimensions for item's primary image.
-        local width, height = utils.dimensions {
-            width = cardWidth,
-            aspect = 2/3,
-            -- scale = 3/5
-        }
-
-        --- create item's component
-        menu = menu + (
-            card {
-                id = item.Id,
-                src = item,
-                column = true,
-                gap = 3,
-                focusable = true
-            }
-            + image:forItem {
-                item = item,
-                type = "Primary",
-                width = width,
-                height = height,
-                icon = utils.getIcon(item.Type)
-            }
-            + text {
-                id = "title",
-                text = item.Name,
-                width = width,
-                font = "normal",
-                align = "center"
-            }
-            + text {
-                id = "subtitle",
-                text = utils.formatItemSubtitle(item),
-                width = width,
-                font = "small",
-                color = "secondary",
-                align = "center"
-            }
-        )
-    end
-
-    return menu
-end
-
 --- @class library:scene
 local library = ui.scene {}
 library.__index = library
@@ -80,7 +26,7 @@ function library:new()
 end
 
 function library:load(data)
-    local items = utils.preq(function()
+    local itemData = utils.preq(function()
         return client.item:getItems({
             SortBy = "SortName",
             SortOrder = "Ascending",
@@ -89,7 +35,29 @@ function library:load(data)
         }):decode()
     end)
 
-    local layer = badr:root { row = true } + libraryGrid(items)
+    local itemCards = grid {
+        type = "vt",
+        width = W_WIDTH - 0,
+        height = W_HEIGHT - header.height - 40,
+        gap = 15,
+        bias = "center"
+    }
+
+    for _,item in ipairs(itemData.Items) do
+        local width, height = utils.dimensions {
+            width = cardWidth,
+            aspect = 2/3,
+            -- scale = 3/5
+        }
+
+        itemCards = itemCards + card {
+            item = item,
+            width = width,
+            height = height
+        }
+    end
+
+    local layer = badr:root { row = true } + itemCards
     layer:updatePosition(18, header.height + 20)
     layer:focusFirstElement()
     self:insertLayer(layer)

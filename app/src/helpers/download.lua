@@ -22,7 +22,10 @@ while true do
 
     if not nativefs.getInfo(path) or task.force then
         local rsp = client.item:getItemImage(task.id, task.type, path, task.params)
-        if not rsp.ok then path = nil end
+
+        if not rsp.ok then
+            path = nil
+        end
     end
 
     channels.DL_OUTPUT:push({

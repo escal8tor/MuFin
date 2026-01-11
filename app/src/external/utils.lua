@@ -16,6 +16,8 @@
 --- THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
 --- CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 --- DEALINGS IN THE SOFTWARE.
+--- 
+--- modifed by escal8tor
 local nativefs = require "src.external.nativefs"
 
 
@@ -266,8 +268,6 @@ function utils.keypoll(start, delay, ...)
     end
 end
 
-
-
 --- @class dimKwds
 --- @field width   number? Width for image/component
 --- @field height  number? Height for image/component
@@ -313,61 +313,6 @@ end
 
 function utils.to_seconds(ticks)
     return math.floor(ticks / 10000000)
-end
-
---- Format card subtitle for Jellyfin item.
---- 
---- @param item table Jellyfin item
---- 
---- @return string subtitle for item
-function utils.formatItemSubtitle(item)
-    if item.Type == "Episode" then return "" end
-    local subtitle = ""
-
-    if item.Type == "MusicAlbum" and item.AlbumArtist ~= nil then
-        subtitle = item.AlbumArtist
-
-    else
-        subtitle = tostring(item.ProductionYear)
-
-        if item.Status == "Continuing" then
-            subtitle = subtitle.." - Present"
-
-        elseif item.EndDate then
-            local endYear = string.match(item.EndDate, "^(%d*)")
-
-            if endYear and endYear ~= subtitle then
-                subtitle = subtitle.." - "..endYear
-            end
-        end
-    end
-
-    return subtitle
-end
-
---- Format card title for Jellyfin item.
---- 
---- @param item table Jellyfin item
---- 
---- @return string title for item
-function utils.formatItemTitle(item)
-    local title = item.Name
-
-    if item.Type == "Episode" then
-        title = string.format("S%d:E%d - %s", item.ParentIndexNumber, item.IndexNumber, item.Name)
-    end
-
-    return title
-end
-
---- Get icon name for item.
---- 
---- @param itemType string Type property of jellyfin item.
-function utils.getIcon(itemType)
-
-    if itemType == "Movie" or itemType == "Episode" then
-        return  "play"
-    end
 end
 
 --- Default error handler for `preq`.

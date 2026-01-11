@@ -20,7 +20,7 @@ local code, code_x, code_y, code_ox, code_oy
 local inst_x, inst_y, inst_w
 local elapsed = 0
 
-local instructions = "On a separate device, go to settings > quick connect and enter this code."
+local instructions = "On a separate device, go to \"Settings\" > \"Quick Connect\" and enter this code."
 
 --- @class login : scene
 --- 

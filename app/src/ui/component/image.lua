@@ -299,6 +299,8 @@ function itemImage:new(props)
 
     local proto = {
         id          = props.item.Id.."_"..props.type:lower(),
+        itemId      = props.itemId,
+        imageType   = props.type,
         icon        = props.item.IsFolder and "enter" or "play",
         width       = props.width,
         height      = props.height,
@@ -345,7 +347,10 @@ function itemImage:new(props)
 
         --- Create a callback to assign the result.
         _dl_callbacks[object.id] = function(path)
-            if object then object:set(path) end
+            if object then 
+                object:set(path)
+                object:load()
+            end
         end
     else
         -- Set path to cached image.
@@ -353,6 +358,40 @@ function itemImage:new(props)
     end
 
     return object
+end
+
+--- Determine image path and download if necessary.
+function itemImage:preload()
+    if self.data or self.loading then return end
+    local path = "data/cache/"..self.itemId.."/"..self.imageType:lower()..".png"
+
+    if nativefs.getInfo(path) then
+        self:set(path)
+        self:load()
+
+    elseif not self.downloadEnqueued then
+        self.downloadEnqueued = true
+
+        -- Enqueue a job to download the image 
+        channels.DL_INPUT:push({
+            id = self.itemId,
+            type = self.imageType,
+            params = {
+                maxWidth = self.width,
+                maxHeight = self.height,
+                format = "Png"
+            }
+        })
+
+        --- Create a callback to assign the result.
+        _dl_callbacks[self.id] = function(path)
+            if self then
+                self.downloadEnqueued = false
+                self:set(path)
+                self:load()
+            end
+        end
+    end
 end
 
 --- Activate fade in for overlay and icon.

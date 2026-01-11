@@ -16,7 +16,7 @@ local utils  = require "src.external.utils"
 ---
 --- @return badr userViews Jellyfin view data
 local function getUserViews(viewData)
-    local userViews = scroll {
+    local viewCards = scroll {
         type = "hz",
         id = "view_cards",
         gap = 15,
@@ -30,29 +30,11 @@ local function getUserViews(viewData)
             scale = 3/5
         }
 
-        userViews = userViews + (
-            card {
-                id = item.Id,
-                src = item,
-                column = true,
-                gap = 5,
-                focusable = true
-            }
-            + image:forItem {
-                item = item,
-                type = "Primary",
-                width = width,
-                height = height,
-                icon = utils.getIcon(item.Type)
-            }
-            + text {
-                id = "title",
-                text = item.Name,
-                width = width,
-                font = "normal",
-                align = "center"
-            }
-        )
+        viewCards = viewCards + card {
+            item = item,
+            width = width,
+            height = height
+        }
     end
 
     return (
@@ -64,7 +46,7 @@ local function getUserViews(viewData)
             text = "My Media",
             font = "large"
         }
-        + userViews
+        + viewCards
     )
 end
 
@@ -76,7 +58,7 @@ end
 ---
 --- @return badr tree Component tree
 local function getRecentlyAdded(name, id, data)
-    local base = scroll {
+    local recentCards = scroll {
         type = "hz",
         id = id.."_latest",
         gap = 15,
@@ -98,36 +80,11 @@ local function getRecentlyAdded(name, id, data)
             scale = 3/5
         }
 
-        base = base + (
-            card {
-                src = item,
-                id = item.Id,
-                column = true,
-                gap = 3,
-                focusable = true
-            }
-            + image:forItem {
-                item = item,
-                type = "Primary",
-                width = width,
-                height = height
-            }
-            + text {
-                id = "title",
-                text = utils.formatItemTitle(item),
-                width = width,
-                font = "normal",
-                align = "center"
-            }
-            + text {
-                id = "subtitle",
-                text = utils.formatItemSubtitle(item),
-                width = width,
-                font = "small",
-                color = "secondary",
-                align = "center"
-            }
-        )
+        recentCards = recentCards + card {
+            item = item,
+            width = width,
+            height = height
+        }
     end
 
     return (
@@ -140,7 +97,7 @@ local function getRecentlyAdded(name, id, data)
             font = "large",
             color = "bright"
         }
-        + base
+        + recentCards
     )
 end
 

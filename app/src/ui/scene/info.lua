@@ -28,7 +28,7 @@ end
 function info:load(data)
     local itemData = utils.preq(function ()
         return client.item:getItem(
-            data.Id,
+            data.itemId,
             { userId = client.session.uid }
         ):decode()
     end)

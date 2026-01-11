@@ -2,56 +2,10 @@ local badr   = require "src.ui.component.badr"
 local card   = require "src.ui.component.card"
 local client = require "src.client"
 local header = require "src.ui.component.header"
-local image  = require "src.ui.component.image"
 local scroll = require "src.ui.component.scroll"
-local text   = require "src.ui.component.text"
 local ui     = require "src.ui.scene"
 local utils  = require "src.external.utils"
 
-local function seasonScroll(item_data, seriesId)
-    local menu = scroll {
-        type = "hz",
-        width = W_WIDTH - 40,
-        gap = 15,
-        bias = "center",
-        lockFocus = true
-    }
-
-    for _, item in ipairs(item_data.Items) do
-        local width, height = utils.dimensions {
-            height = (W_HEIGHT - header.height - 65),
-            aspect = 2/3
-        }
-
-        item.seriesId = seriesId
-
-        menu = menu + (
-            card {
-                id = item.Id,
-                src = item,
-                column = true,
-                gap = 3,
-                focusable = true
-            }
-            + image:forItem {
-                item = item,
-                type = "Primary",
-                width = width,
-                height = height,
-                fallback = "/data/cache/"..seriesId.."/primary.png"
-            }
-            + text {
-                id = "title",
-                text = item.Name,
-                width = width,
-                font = "normal",
-                align = "center"
-            }
-        )
-    end
-
-    return menu
-end
 
 --- @class seasons:scene
 local seasons = ui.scene {}
@@ -73,8 +27,29 @@ function seasons:load(data)
     end)
 
     if #itemData.Items > 1 then
-        local layer = badr:root { row = true }
-        layer = layer + seasonScroll(itemData, data.seriesId)
+        local seasonCards = scroll {
+            type = "hz",
+            width = W_WIDTH - 40,
+            gap = 15,
+            bias = "center",
+            lockFocus = true
+        }
+
+        for _, item in ipairs(itemData.Items) do
+            local width, height = utils.dimensions {
+                height = (W_HEIGHT - header.height - 65),
+                aspect = 2/3
+            }
+
+            seasonCards = seasonCards + card {
+                item = item,
+                width = width,
+                height = height,
+                seriesId = data.seriesId
+            }
+        end
+
+        local layer = badr:root { row = true } + seasonCards
         layer:updatePosition(20, header.height + 20)
         layer:focusFirstElement()
         self:insertLayer(layer)
