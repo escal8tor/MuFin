@@ -3,16 +3,14 @@ local card   = require "src.ui.component.card"
 local client = require "src.client"
 local header = require "src.ui.component.header"
 local image  = require "src.ui.component.image"
-local log    = require "src.helpers.log"
 local scroll = require "src.ui.component.scroll"
 local text   = require "src.ui.component.text"
 local ui     = require "src.ui.scene"
 local utils  = require "src.external.utils"
 
+--#region helpers
 
---#region locals
-
---- Add component tree for user views.
+--- Create component tree for user views.
 ---
 --- @return badr userViews Jellyfin view data
 local function getUserViews(viewData)
@@ -50,7 +48,7 @@ local function getUserViews(viewData)
     )
 end
 
---- Add component tree(s) for recently added media.
+--- Create component tree(s) for recently added media.
 ---
 --- @param name string Source view title
 --- @param id   string Source view id
@@ -101,10 +99,9 @@ local function getRecentlyAdded(name, id, data)
     )
 end
 
---#endregion locals
+--#endregion helpers
 
---- @class home: scene
----
+--- @class home : scene
 local home = ui.scene {}
 home.__index = home
 

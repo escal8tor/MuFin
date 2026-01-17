@@ -70,8 +70,9 @@ end
 --- 
 --- @field seriesId string? Necessary only for season cards. 
 --- @field isFolder boolean Indicates whether item can be entered.
---- @field type     string  Item type
+--- @field type     string  Item type ("Movie", "Episode", etc.)
 --- 
+--- Main UI Component for Jellyfin items.
 local card = badr {}
 card.__index = card
 
@@ -198,7 +199,6 @@ function card:draw()
 end
 
 --#endregion card
-
 
 ---@overload fun(table):card
 local export = setmetatable({}, {

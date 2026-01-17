@@ -1,11 +1,7 @@
 local badr   = require "src.ui.component.badr"
-local config = require "src.external.config"
 local header = require "src.ui.component.header"
-local image  = require "src.ui.component.image"
 local text   = require "src.ui.component.text"
-local scroll = require "src.ui.component.scroll"
 local ui     = require "src.ui.scene"
-local utils  = require "src.external.utils"
 
 --- @class settings:scene
 local settings = ui.scene {}

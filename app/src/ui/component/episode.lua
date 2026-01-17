@@ -139,7 +139,7 @@ function episode:onKeyPress(key)
         play { itemId = self.id, static = key == "s", transcode = key == "t" }
 
     elseif key == "c" then
-        ui.stack:push("info", { Id = self.id } )
+        ui.stack:push("info", { itemId = self.id } )
 
     elseif self.parent.onKeyPress then
         self.parent:onKeyPress(key)

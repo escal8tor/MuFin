@@ -3,8 +3,6 @@ local card   = require "src.ui.component.card"
 local client = require "src.client"
 local grid   = require "src.ui.component.grid"
 local header = require "src.ui.component.header"
-local image  = require "src.ui.component.image"
-local text   = require "src.ui.component.text"
 local ui     = require "src.ui.scene"
 local utils  = require "src.external.utils"
 
