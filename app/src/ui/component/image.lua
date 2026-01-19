@@ -68,14 +68,14 @@ end)
 
 --#region image
 
---- @alias imgFit        
+--- @alias fitMode 
 --- | "fill"         Scale image to fill viewport
 --- | "fitWidth"     Scale width to fit, preserve aspect ratio
 --- | "fitHeight"    Scale height to fit, preserve aspect ratio
 --- | "centerWidth"  Fit width and center content
 --- | "centerHeight" Fit height and center content
 
---- @class image:badr
+--- @class image : badr
 --- 
 --- @field protected data      love.Image? Drawable (when loaded)
 --- @field protected imgWidth  number      Image width
@@ -88,7 +88,7 @@ end)
 --- @field updated  boolean Set once image path has been set
 --- @field path     string  Path to image
 --- @field fallback string  Path to fallback image
---- @field fit      imgFit  Image positioning within viewport
+--- @field fit      fitMode Image positioning within viewport
 --- 
 --- Image UI element.
 local image = badr {}
@@ -103,23 +103,23 @@ function image:new(props)
     props = props or {}
 
     local proto = {
-        path = props.path,
-        fallback = props.fallback,
-        id = props.id or tostring(love.timer.getTime()),
-        x = props.x or 0,
-        y = props.y or 0,
-        width = props.width,
-        height = props.height,
-        radius = props.cr or 3,
+        path      = props.path,
+        fallback  = props.fallback,
+        id        = props.id or tostring(love.timer.getTime()),
+        x         = props.x or 0,
+        y         = props.y or 0,
+        width     = props.width,
+        height    = props.height,
+        radius    = props.cr or 3,
         focusable = props.focusable,
-        fit = props.fit or "fill",
-        visible = false,
-        data = nil,
-        imgWidth = nil,
+        fit       = props.fit or "fill",
+        visible   = false,
+        data      = nil,
+        imgWidth  = nil,
         imgHeight = nil,
-        scaleX = nil,
-        scaleY = nil,
-        loading = false
+        scaleX    = nil,
+        scaleY    = nil,
+        loading   = false
     }
 
 
@@ -132,50 +132,6 @@ function image:new(props)
 
     --- @type image
     return setmetatable(badr(proto), image)
-end
-
---- Load image from path.
---- 
---- Creates `love.Image` object from `path`, updating `imgWidth` and `imgHeight`
---- if successful. If `path` is nil or cannot be loaded, `fallback` is assigned to `path` 
---- and loaded instead.
---- 
---- @return boolean success Whether or not image was loaded.
-function image:load()
-
-    if self.path then
-        lily.newImage(self.path)
-        :onComplete(function(ud, img)
-            self.loading = false
-            self.imgX, self.imgY = self.x, self.y
-            self.imgWidth, self.imgHeight = img:getDimensions()
-            self.scaleX, self.scaleY = 1, 1
-            self.originX, self.originY = nil, nil
-
-            if self.fit:find("fill", 1, true) then
-                self.scaleX = self.width / self.imgWidth
-                self.scaleY = self.height / self.imgHeight
-
-                if self.fit == "fillWidth" then
-                    self.scaleY =  self.scaleX
-                    self.imgY = self.imgY + ((self.height - (self.imgHeight + self.scaleY)) / 2)
-
-                elseif self.fit == "fillHeight" then
-                    self.scaleX = self.scaleY
-                    self.imgX = self.imgX + ((self.width - (self.imgWidth * self.scaleX)) / 2)
-                end
-            end
-
-            self.data = img
-        end)
-        :onError(function(ud, err, src)
-            log.warn("Failed to load image: %s.", err)
-            self.loading = false
-            self:set(self.fallback)
-            self.fallback = nil
-        end)
-        self.loading = true
-    end
 end
 
 --- @protected
@@ -237,22 +193,86 @@ function image:draw()
     love.graphics.pop()
 end
 
+--- @protected
+--- Set parameters for drawing image according component's drawable area.
+function image:scaleToFit()
+    self.imgWidth, self.imgHeight = self.data:getDimensions()
+    self.imgX,     self.imgY      = self.x, self.y
+    self.scaleX,   self.scaleY    = 1, 1
+    self.originX,  self.originY   = 0, 0
+
+    if self.fit == "fill" then
+        self.scaleX = self.width / self.imgWidth
+        self.scaleY = self.height / self.imgHeight
+
+    elseif self.fit == "fitWidth" then
+        self.scaleX = self.width / self.imgWidth
+        self.scaleY = self.scaleX
+        self.imgY   = self.y + ((self.height - (self.imgHeight * self.scaleY)) / 2)
+
+    elseif self.fit == "fitHeight" then
+        self.scaleY = self.height / self.imgHeight
+        self.scaleX = self.scaleY
+        self.imgX   = self.x + ((self.width - (self.imgWidth * self.scaleX)) / 2)
+
+    elseif self.fit == "centerWidth" then
+        self.scaleX  = self.width / self.imgWidth
+        self.scaleY  = self.scaleX
+        self.originY = ((self.imgHeight * self.scaleY) - self.height) / 2
+
+    elseif self.fit == "centerHeight" then
+        self.scaleY  = self.height / self.imgHeight
+        self.scaleX  = self.scaleY
+        self.originX = ((self.imgWidth * self.scaleX) - self.width) / 2
+    end
+end
+
+--- Load image from path.
+--- 
+--- Creates `love.Image` object from `path`, updating `imgWidth` and `imgHeight`
+--- if successful. If `path` is nil or cannot be loaded, `fallback` is assigned to `path` 
+--- and loaded instead.
+--- 
+--- @return boolean success Whether or not image was loaded.
+function image:load()
+    if self.loading or self.data then return false end
+    self.loading = true
+
+    if self.path then
+        lily.newImage(self.path)
+        :onComplete(function(ud, img)
+            log.trace("Image loaded: %s", self.id)
+            self.loading = false
+            self.data = img
+            self:scaleToFit()
+        end)
+        :onError(function(ud, err, src)
+            log.warn("Failed to load image: %s.", err)
+            self.loading = false
+
+            if self.fallback then
+                self.path = self.fallback
+                self.fallback = nil
+                self:load()
+            end
+        end)
+    else
+        log.warn("No path set for %s", self.id)
+    end
+end
+
 --- Unload image data, and clear properties that depend on it.
 function image:release()
     if self.data == nil then return end
-
-    ::release::
-    if self.data:release() then
-        self.data = nil
-        self.imgWidth = nil
-        self.imgHeight = nil
-        self.scaleX = nil
-        self.scaleY = nil
-        self.originX = nil
-        self.originY = nil
-    else
-        goto release
-    end
+    log.trace("Image released: %s", self.id)
+    self.data:release()
+    self.data      = nil
+    self.imgWidth  = nil
+    self.imgHeight = nil
+    self.scaleX    = nil
+    self.scaleY    = nil
+    self.originX   = nil
+    self.originY   = nil
 end
 
 --- Set objects image to path.
@@ -274,13 +294,14 @@ local _dl_callbacks = {}
 
 --- @class itemImage:image
 --- 
---- @field protected bhWidth     number   Blurhash width
---- @field protected bhHeight    number   Blurhash height
---- @field protected bhColors    number[] Blurhash colors
---- @field protected icon        string   Name of icon for indicator
---- @field protected iconOpacity number   Indicator icon opacity
---- @field protected ovlyOpacity number   Overlay opacity
---- @field protected ovlyTween   tween?   Animation
+--- @field protected bhWidth          number   Blurhash width
+--- @field protected bhHeight         number   Blurhash height
+--- @field protected bhColors         number[] Blurhash colors
+--- @field protected icon             string   Name of icon for indicator
+--- @field protected iconOpacity      number   Indicator icon opacity
+--- @field protected ovlyOpacity      number   Overlay opacity
+--- @field protected ovlyTween        tween?   Animation
+--- @field protected downloadEnqueued boolean  Set while download is in progress.
 --- 
 --- Specialized image for card components
 --- 
@@ -299,7 +320,7 @@ function itemImage:new(props)
 
     local proto = {
         id          = props.item.Id.."_"..props.type:lower(),
-        itemId      = props.itemId,
+        itemId      = props.item.Id,
         imageType   = props.type,
         icon        = props.item.IsFolder and "enter" or "play",
         width       = props.width,
@@ -331,31 +352,7 @@ function itemImage:new(props)
 
     --- @type itemImage
     local object = setmetatable(image:new(proto), itemImage)
-    local filepath = "data/cache/"..props.item.Id.."/"..props.type:lower()..".png"
-
-    if nativefs.getInfo(filepath) == nil then
-        --- Generate a job to download the item's image.
-        channels.DL_INPUT:push({
-            id = props.item.Id,
-            type = props.type,
-            params = {
-                maxWidth = props.width,
-                maxHeight = props.height,
-                format = "Png"
-            }
-        })
-
-        --- Create a callback to assign the result.
-        _dl_callbacks[object.id] = function(path)
-            if object then 
-                object:set(path)
-                object:load()
-            end
-        end
-    else
-        -- Set path to cached image.
-        object:set(filepath)
-    end
+    object:preload()
 
     return object
 end
@@ -363,11 +360,14 @@ end
 --- Determine image path and download if necessary.
 function itemImage:preload()
     if self.data or self.loading then return end
-    local path = "data/cache/"..self.itemId.."/"..self.imageType:lower()..".png"
+
+    local path = self.path or (
+        "data/cache/"..self.itemId.."/"..self.imageType:lower()..".png"
+    )
 
     if nativefs.getInfo(path) then
         self:set(path)
-        self:load()
+        --self:load()
 
     elseif not self.downloadEnqueued then
         self.downloadEnqueued = true
@@ -384,10 +384,10 @@ function itemImage:preload()
         })
 
         --- Create a callback to assign the result.
-        _dl_callbacks[self.id] = function(path)
+        _dl_callbacks[self.id] = function(fp)
             if self then
                 self.downloadEnqueued = false
-                self:set(path)
+                self:set(fp)
                 self:load()
             end
         end
@@ -516,7 +516,7 @@ function itemImage:drawImage()
         )
 
     else
-        -- Image isn't loaded or loading, and a path is set.
+        -- Image should be loaded by this point; but if it isn't, do so now.
         if not self.loading and self.path then
             self:load()
         end

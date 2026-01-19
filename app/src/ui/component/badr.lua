@@ -267,6 +267,28 @@ function badr:draw()
     end
 end
 
+function badr:load()
+
+    for _, child in ipairs(self.children) do
+
+        if child.load then
+            child:load()
+        end
+    end
+
+end
+
+function badr:preload()
+
+    for _, child in ipairs(self.children) do
+
+        if child.preload then
+            child:preload()
+        end
+    end
+
+end
+
 function badr:release()
 
     for _, child in ipairs(self.children) do

@@ -50,7 +50,6 @@ end
 function scene:leave(data)
     local focus = self:focused()
     self.visible = false
-
     self:release()
 
     if focus and focus.onFocusLost then
@@ -65,6 +64,8 @@ function scene:release()
     for _,layer in ipairs(self.layers) do
         layer:release()
     end
+
+    --collectgarbage("collect")
 end
 
 --- Handle keypress.

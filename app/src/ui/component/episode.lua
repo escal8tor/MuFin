@@ -22,24 +22,24 @@ episode.__index = episode
 
 function episode:new(item)
     local proto = {
-        id = item.Id,
+        id        = item.Id,
         focusable = true,
-        row = true,
-        gap = 15
+        row       = true,
+        gap       = 15
     }
 
     local width, height = utils.dimensions {
-        width = W_WIDTH,
+        width  = W_WIDTH,
         aspect = 4/3,
-        scale = 2/5
+        scale  = 2/5
     }
 
     proto.image = image:forItem {
-        item = item,
-        type = "Primary",
-        width = width,
+        item   = item,
+        type   = "Primary",
+        width  = width,
         height = height,
-        fit = "fillHeight"
+        fit    = "fitHeight"
     }
 
     if item.ParentIndexNumber > 0 then
@@ -49,16 +49,16 @@ function episode:new(item)
     end
 
     proto.title = text {
-        id = "title",
-        text = string.format("%s %s", item.IndexNumber, item.Name),
+        id    = "title",
+        text  = string.format("%s %s", item.IndexNumber, item.Name),
         width = W_WIDTH - width - 50,
-        font = "normal",
+        font  = "normal",
         align = "left"
     }
 
     local title = badr {
         column = true,
-        gap = 2
+        gap    = 2
     }
     + proto.title
 
@@ -67,10 +67,10 @@ function episode:new(item)
         local endtime = os.date("%I:%M %p",os.time() + utils.to_seconds(item.RunTimeTicks))
 
         proto.runtime = text {
-            id = item.Id.."_runtime",
-            text = string.format("%dm Ends at %s", runtime, endtime:upper()),
+            id    = item.Id.."_runtime",
+            text  = string.format("%dm Ends at %s", runtime, endtime:upper()),
             width = W_WIDTH - width - 50,
-            font = "normal",
+            font  = "normal",
             color = "primary",
             align = "left"
         }
@@ -78,17 +78,17 @@ function episode:new(item)
         title = title + proto.runtime
     else
         local err_icon = text {
-            id = item.Id.."_err_icon",
-            text = utf8.char(0xE001),
-            font = "normal_icon",
+            id    = item.Id.."_err_icon",
+            text  = utf8.char(0xE001),
+            font  = "normal_icon",
             color = "error"
         }
 
         proto.runtime = text {
-            id = item.Id.."_runtime_not_found",
-            text = " Null runtime",
+            id    = item.Id.."_runtime_not_found",
+            text  = " Null runtime",
             width = W_WIDTH - width - err_icon.width - 50,
-            font = "normal",
+            font  = "normal",
             color = "error",
             align = "left"
         }
@@ -106,19 +106,19 @@ function episode:new(item)
     local wrap = math.floor((height - title.height - 13) / normal_height)
 
     proto.overview = text {
-        id = item.Id.."_overview",
-        text = item.Overview or "",
-        width = W_WIDTH - width - 50,
-        wrap = wrap, -- 6,
-        font = "normal",
-        color = "secondary",
-        align = "left",
+        id     = item.Id.."_overview",
+        text   = item.Overview or "",
+        width  = W_WIDTH - width - 50,
+        wrap   = wrap, -- 6,
+        font   = "normal",
+        color  = "secondary",
+        align  = "left",
         scroll = "vt"
     }
 
     local itemText = badr {
         column = true,
-        gap = 8
+        gap    = 8
     }
     + title
     + proto.overview
@@ -136,7 +136,7 @@ end
 function episode:onKeyPress(key)
 
     if key == "x" or key == "t" or key == "s" then
-        play { itemId = self.id, static = key == "s", transcode = key == "t" }
+        ui.stack:push("play", { itemId = self.id, static = key == "s", transcode = key == "t" })
 
     elseif key == "c" then
         ui.stack:push("info", { itemId = self.id } )

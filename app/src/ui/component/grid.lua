@@ -104,29 +104,51 @@ function grid:update(dt)
     if #self.children < 1 then return end
     self.group:update(dt)
 
-    --- Absolute viewport position
-    local avp = self[self.sa] + self[self.vp]
+    local avp = self[self.sa] + self[self.vp] -- Absolute viewport positio
+    local plb = self[self.sd] * 0.7           -- Preload buffer range
+    local nvf = self.vf                       -- New first visible
 
-    for i=(self.vf > 1 and self.vf-1 or 1), #self.children do
+    while nvf > 1 do
+        local pc  = self.children[nvf - 1]
+        local d2p = pc[self.sa] - avp
+
+        if d2p + pc[self.sd] >= -plb then
+            nvf = nvf - 1
+        else
+            break
+        end
+    end
+
+    for i=(nvf > 1 and nvf-1 or 1), #self.children do
         local child = self.children[i]
         local d2p = child[self.sa] - avp -- Distance to position
         local hsd = child[self.sd] / 2   -- Half child dimension
 
-        -- Child is visible so long as it is within the viewport
-        child.visible = ((d2p + child[self.sd]) >= -hsd) and
-                        (d2p < (self[self.sd] + hsd))
+        -- Determine if child is within preload buffer range
+        local inPLB = (d2p + child[self.sd] >= -(plb + hsd)) and
+                      (d2p < self[self.sd] + plb + hsd)
 
-        if child.visible then
-            child:update(dt)
+        if inPLB then
 
-            if i < self.vf then self.vf = i end
+            if child.load and not (child.loading or child.data) then
+                child:load()
+            end
 
-        else
-            child:release()
+            -- Update child visibility based on whether it's within the viewport
+            child.visible = (d2p + child[self.sd] >= -hsd) and
+                            (d2p < self[self.sd] + hsd)
 
-            if i == self.vf and self.vf < #self.children then
+            if child.visible then
+                child:update(dt)
+
+                if i < self.vf then self.vf = i end
+
+            elseif i == self.vf and self.vf < #self.children then
                 self.vf = self.vf + 1
             end
+
+        elseif child.release then
+            child:release()
         end
     end
 

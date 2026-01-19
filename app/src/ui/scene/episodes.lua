@@ -20,18 +20,18 @@ function episodes:load(data)
     local response = utils.preq(function ()
         return client.show:getEpisodes(
             data.seriesId, {
-                Fields = "PrimaryImageAspectRatio,Overview",
+                Fields   = "PrimaryImageAspectRatio,Overview",
                 seasonId = data.seasonId
             }
         ):decode()
     end)
 
     local list = scroll {
-        type = "vt",
-        width = W_WIDTH - 0,
-        height = W_HEIGHT - header.height - 40,
-        gap = 15,
-        bias = "center",
+        type      = "vt",
+        width     = W_WIDTH - 0,
+        height    = W_HEIGHT - header.height - 40,
+        gap       = 15,
+        bias      = "center",
         lockFocus = true,
     }
 

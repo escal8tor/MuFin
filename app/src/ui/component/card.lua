@@ -93,7 +93,8 @@ function card:new(props)
         type   = props.imageType or "Primary",
         width  = props.width,
         height = props.height,
-        icon   = getIcon(proto.type)
+        icon   = getIcon(proto.type),
+        fit    = "fitHeight"
     }
 
     if props.seriesId then
@@ -154,11 +155,11 @@ function card:onKeyPress(key)
             })
 
         elseif self.type == "Movie" or self.type == "Episode" then
-            play {
+            ui.stack:push( "play", {
                 itemId = self.id,
                 static = key == "s",
                 transcode = key == "t"
-            }
+            })
         end
 
     elseif key == "c" then
