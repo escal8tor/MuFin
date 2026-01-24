@@ -130,8 +130,8 @@ function grid:update(dt)
 
         if inPLB then
 
-            if child.load and not (child.loading or child.data) then
-                child:load()
+            if child.preload and not (child.loading or child.data) then
+                child:preload()
             end
 
             -- Update child visibility based on whether it's within the viewport

@@ -292,8 +292,7 @@ function scroll:update(dt)
     if #self.children < 1 then return end
     self.group:update(dt)
 
-    --- Absolute viewport position
-    local avp = self[self.sa] + self[self.vp]
+    local avp = self[self.sa] + self[self.vp] -- Absolute viewport position
 
     for i=(self.vf > 1 and self.vf-1 or 1), #self.children do
         local child = self.children[i]

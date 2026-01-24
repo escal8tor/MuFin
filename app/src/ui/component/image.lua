@@ -281,9 +281,12 @@ end
 --- Upon the next call to `draw` the new image should be loaded.
 --- 
 --- @param path? string File path for image
-function image:set(path)
+function image:setPath(path)
     self.path = path and path or self.fallback
-    self:release()
+
+    if self.data then
+        self:release()
+    end
 end
 
 --#endregion image
@@ -352,42 +355,59 @@ function itemImage:new(props)
 
     --- @type itemImage
     local object = setmetatable(image:new(proto), itemImage)
-    object:preload()
+    object:download()
 
     return object
 end
 
---- Determine image path and download if necessary.
+--- Load image, download if necessary.
 function itemImage:preload()
-    if self.data or self.loading then return end
+    if self.data or self.loading or self.downloadEnqueued then return end
 
-    local path = self.path or (
-        "data/cache/"..self.itemId.."/"..self.imageType:lower()..".png"
-    )
+    if self.path then
+        self:load()
+
+    else
+        self:download(true)
+    end
+end
+
+--- @protected
+--- Download image from Jellyfin server.
+--- 
+--- @param load boolean? Load afterward.
+function itemImage:download(load)
+    if self.downloadEnqueued then return end
+    local path = "data/cache/"..self.itemId.."/"..self.imageType:lower()..".png"
 
     if nativefs.getInfo(path) then
-        self:set(path)
-        --self:load()
+        self.path = path
 
-    elseif not self.downloadEnqueued then
-        self.downloadEnqueued = true
+        if load then
+            self:load()
+        end
+    end
 
-        -- Enqueue a job to download the image 
-        channels.DL_INPUT:push({
-            id = self.itemId,
-            type = self.imageType,
-            params = {
-                maxWidth = self.width,
-                maxHeight = self.height,
-                format = "Png"
-            }
-        })
+    self.downloadEnqueued = true
 
-        --- Create a callback to assign the result.
-        _dl_callbacks[self.id] = function(fp)
-            if self then
-                self.downloadEnqueued = false
-                self:set(fp)
+    -- Enqueue a job to download the image 
+    channels.DL_INPUT:push({
+        id = self.itemId,
+        type = self.imageType,
+        params = {
+            maxWidth = self.width,
+            maxHeight = self.height,
+            format = "Png"
+        }
+    })
+
+    --- Create a callback to assign the result.
+    _dl_callbacks[self.id] = function(fp)
+        if self then
+            self.downloadEnqueued = false
+            self.path = fp and fp or self.fallback
+
+            if load then
                 self:load()
             end
         end
@@ -517,8 +537,8 @@ function itemImage:drawImage()
 
     else
         -- Image should be loaded by this point; but if it isn't, do so now.
-        if not self.loading and self.path then
-            self:load()
+        if not self.loading then
+            self:preload()
         end
 
         -- Blurhash parameters are set.
@@ -606,6 +626,7 @@ function export.updateImagePaths()
         if _dl_callbacks[result.id] then
             _dl_callbacks[result.id](result.path)
             _dl_callbacks[result.id] = nil
+            break
         end
 
         result = channels.DL_OUTPUT:pop()
