@@ -3,6 +3,12 @@ local json     = require "src.external.json"
 local nativefs = require "src.external.nativefs"
 local ui       = require "src.ui.scene"
 
+--- Download/format path to subtitles.
+--- 
+--- @param itemId string Jellyfin media item id.
+--- @param source table  Media source
+--- 
+--- @return string arguments Relevant arguments to MPV.
 local function getSubtitles(itemId, source)
     local args = ""-- string.format(" --sid=%d", math.max(source.DefaultSubtitleStreamIndex or 0, 0))
     local path = "data/playback/subtitles"
@@ -28,8 +34,16 @@ local function getSubtitles(itemId, source)
     return args
 end
 
+--- Download media attachments.
+--- 
+--- Only applicable when transcoding, and only supported on TrimUI devices
+--- (requires mpv >= 0.38.0)
+--- 
+--- @param source table Media sources.
+--- 
+--- @return string arguments Relevant arguments to MPV.
 local function getAttachments(source)
-    if not source.MediaAttachments then return "" end
+    if not (DEVICE_NAME == "trimui" and source.MediaAttachments) then return "" end
     local path = "data/playback/attachments"
 
     if not nativefs.getInfo(path) then
