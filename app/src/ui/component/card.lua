@@ -13,13 +13,12 @@ local ui     = require "src.ui.scene"
 --- 
 --- @return string subtitle for item
 local function formatItemSubtitle(item)
-    if item.Type == "Episode" or item.Type == "CollectionFolder" then return "" end
     local subtitle = ""
 
     if item.Type == "MusicAlbum" and item.AlbumArtist ~= nil then
         subtitle = item.AlbumArtist
 
-    else
+    elseif item.Type == "Series" or item.Type == "Movie" then
         subtitle = tostring(item.ProductionYear)
 
         if item.Status == "Continuing" then
@@ -173,7 +172,7 @@ end
 function card:onFocus()
     header.reset()
     header.append("X", "Info")
-    header.append("A", self.IsFolder and "Open" or "Play")
+    header.append("A", self.isFolder and "Open" or "Play")
     header.append("B", (#ui.stack.active > 1) and "Back" or "Quit")
     header.updatePosition()
 
