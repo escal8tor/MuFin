@@ -241,7 +241,7 @@ function image:load()
     if self.path then
         lily.newImage(self.path)
         :onComplete(function(ud, img)
-            log.trace("Image loaded: %s", self.id)
+            --log.trace("image loaded: %s", self.id)
             self.loading = false
             self.data = img
             self:scaleToFit()
@@ -264,7 +264,7 @@ end
 --- Unload image data, and clear properties that depend on it.
 function image:release()
     if self.data == nil then return end
-    log.trace("Image released: %s", self.id)
+    --log.trace("Image released: %s", self.id)
     self.data:release()
     self.data      = nil
     self.imgWidth  = nil

@@ -119,7 +119,7 @@ function grid:update(dt)
         end
     end
 
-    for i=(nvf > 1 and nvf-1 or 1), #self.children do
+    for i=(nvf > self.step and nvf-self.step or 1), #self.children do
         local child = self.children[i]
         local d2p = child[self.sa] - avp -- Distance to position
         local hsd = child[self.sd] / 2   -- Half child dimension

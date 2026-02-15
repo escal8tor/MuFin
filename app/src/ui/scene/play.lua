@@ -43,7 +43,7 @@ end
 --- 
 --- @return string arguments Relevant arguments to MPV.
 local function getAttachments(source)
-    if not (DEVICE_NAME == "trimui" and source.MediaAttachments) then return "" end
+    if not (string.match(DEVICE_NAME, "tui") and source.MediaAttachments) then return "" end
     local path = "data/playback/attachments"
 
     if not nativefs.getInfo(path) then

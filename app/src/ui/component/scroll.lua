@@ -22,7 +22,7 @@ local log    = require "src.helpers.log"
 --- @alias mvCDime "cw"|"ch"                Content dimension metavariable
 --- @alias mvMarg  "tmg"|"rmg"|"bmg"|"lmg"  Margin metavariable
 
---- @class scroll:badr
+--- @class scroll : badr
 ---
 --- ANIMATION
 --- @field group flux   Flux group for animation
@@ -56,10 +56,12 @@ local log    = require "src.helpers.log"
 --- @field oml mvMarg variable for lower margin in other axis
 --- 
 --- SCROLL
---- @field sa          mvAxis     Variable for scroll axis
---- @field oa          mvAxis     Variable for other axis
---- @field bias        scrollBias Location to which focus should be moved
---- @field scrDuration number     Time over which to animate scrolling
+--- @field sa           mvAxis     Variable for scroll axis
+--- @field oa           mvAxis     Variable for other axis
+--- @field bias         scrollBias Location to which focus should be moved
+--- @field scrDuration  number     Time over which to animate scrolling
+--- @field parentScroll scroll?    Reference to parent scroll in component tree
+--- @field scrollIndex  integer?   Index in parent scroll array
 --- 
 --- VIEWPORT
 --- @field vx number Viewport position in x axis
@@ -427,89 +429,46 @@ function scroll:nextFocusableChild(key, step, focused)
     return self.lastFocused or focusable[1]
 end
 
---- @protected
---- Find next focusable element in an adjacent scroll.
----
---- @param key string Directional
---- @param foc badr?  Focused element
----
---- @return badr? nxFoc Next focusable decendent
----
---- @see scroll.keypressed
-function scroll:nextScroll(key, foc)
-    local nxFoc
-
-    local function dive(dec)
-
-        if utils.isInstance(dec, scroll) then
-            nxFoc = dec:nextFocusableChild(key)
-            if nxFoc then return true end
-        end
-
-        for _, child in ipairs(dec.children) do
-            if dive(child) then return true end
-        end
-    end
-
-    -- Identify ancestor of caller.
-    for sidx, child in ipairs(self.children) do
-
-        if badr.__pow(child, foc.id) then
-            dive(self.children[self:nextIndex(key, sidx, #self.children)])
-            return nxFoc
-        end
-    end
-end
-
 --- Handle keypress
 function scroll:onKeyPress(key)
     local root = self:getRoot()
-    local nxFoc, ancestor
+    local nxFocus
 
     if key == self.nxc or key == self.pvc then
-        nxFoc = self:nextFocusableChild(key, root.focusedElement)
+        nxFocus = self:nextFocusableChild(key, root.focusedElement)
+
+        if nxFocus and nxFocus ~= root.focusedElement then
+            self:setFocus(nxFocus)
+            self.sTime = love.timer.getTime()
+            self.lastKey = key
+            self:scrollToFocused(nxFocus)
+
+            return true
+        end
 
     elseif not self.lockFocus and (key == self.nxp or key == self.pvp) then
-        ancestor = self.parent
 
-        while ancestor do
-
-            if utils.isInstance(ancestor, scroll) then
-                -- Get next focusable in an ajacent scroll.
-                nxFoc = ancestor:nextScroll(key, self)
-                break
-
-            elseif ancestor.parent == nil then
-                -- Hit root component, find next focusable.
-                nxFoc = ancestor:getNextFocusable(
-                    key == self.nxp
-                    and "previous"
-                    or "next"
-                )
-                break
-            end
-
-            ancestor = ancestor.parent
+        if self.parentScroll then
+            nxFocus = self.parentScroll:switchToAdjacent(key, self)
+        else
+            nxFocus = root:getNextFocusable(
+                key == self.nxp
+                and "previous"
+                or "next"
+            )
         end
-    end
 
-    if nxFoc and nxFoc ~= root.focusedElement then
-        self.sTime = love.timer.getTime()
-        self.lastKey = key
-        self:setFocus(nxFoc)
-
-        if ancestor then
+        if nxFocus and nxFocus ~= root.focusedElement then
+            self:setFocus(nxFocus)
             self.sTime = nil
             self.lastKey = nil
 
-            if ancestor.scrollToFocused then
-                ancestor:scrollToFocused(nxFoc)
+            if self.parentScroll then
+                self.parentScroll:scrollToFocused(nxFocus)
             end
-        else
-            self:scrollToFocused(nxFoc)
-        end
 
-        return true
+            return true
+        end
     end
 
     return false
@@ -517,9 +476,108 @@ end
 
 --#endregion scroll
 
+--#region multiScroll
+
+--- @class multiScroll : scroll
+--- 
+--- @field scrolls table    Reference to next scroll in each branch.
+--- @field focIdx  integer  Index of branch containing currently focused element.
+--- 
+--- 
+local multiScroll = scroll:new {}
+multiScroll.__index = multiScroll
+
+--- Create new multiScroll object
+--- 
+--- @param props table Component properties
+--- 
+--- @return multiScroll multiScroll new multiScroll object
+function multiScroll:new(props)
+    props = props or {}
+
+    local proto = {
+        scrolls = {}
+    }
+
+    for key, value in pairs(props) do
+
+        if not proto[key] then
+            proto[key] = value
+        end
+    end
+
+    --- @type multiScroll
+    return setmetatable(scroll:new(proto), multiScroll)
+end
+
+--- Find next scroll down in component tree. 
+--- 
+--- @param other badr Component tree
+--- 
+--- @return scroll? next Nearest scroll
+function multiScroll:findNextScroll(other)
+
+    local function recurse(decendent)
+
+        if utils.isInstance(decendent, scroll) then
+            decendent.parentScroll = self
+            decendent.scrollIndex = #self.scrolls+1
+            self.scrolls[#self.scrolls+1] = decendent
+            return decendent
+        end
+
+        for _, child in ipairs(decendent.children) do
+            local nxScroll = recurse(child)
+
+            if nxScroll then
+                return decendent
+            end
+        end
+    end
+
+    return recurse(other)
+end
+
+function multiScroll.__add(self, other)
+    --- @type scroll nNext scroll in component tree.
+    self:findNextScroll(other)
+    return scroll.__add(self, other)
+end
+
+--- Get first focusable component in an adjacent scroll
+--- 
+--- @param key      string Key pressed
+--- @param pvScroll scroll Previous (caller) scroll
+--- 
+--- @return badr? nxFocus Next focusable
+function multiScroll:switchToAdjacent(key, pvScroll)
+    local root = self:getRoot()
+    local index = self:nextIndex(key, pvScroll.scrollIndex, #self.scrolls)
+    local nxFocus
+
+    if index then
+        nxFocus = self.scrolls[index]:nextFocusableChild(key)
+
+        -- if nxFocus then
+        --     log.trace("(%s) switchToAdjacent: %s -> %s", self.id, pvScroll.scrollIndex, index)
+        -- end
+    else
+        nxFocus = root:getNextFocusable(
+            key == pvScroll.nxp
+            and "previous"
+            or "next"
+        )
+    end
+
+    return nxFocus
+end
+
+--#endregion
+
 --- @overload fun(props: table<string, any>): scroll
 local export = setmetatable({
-    new = scroll.new
+    new = scroll.new,
+    multi = function(t, ...) return multiScroll:new(...) end
 }, {
     __call = function (t, ...) return scroll:new(...) end,
     __index = scroll

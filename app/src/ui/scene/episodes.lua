@@ -27,6 +27,7 @@ function episodes:load(data)
     end)
 
     local list = scroll {
+        id        = "episodes",
         type      = "vt",
         width     = W_WIDTH - 0,
         height    = W_HEIGHT - header.height - 40,

@@ -34,11 +34,12 @@ function library:load(data)
     end)
 
     local itemCards = grid {
-        type = "vt",
-        width = W_WIDTH - 0,
+        id     = "library_grid",
+        type   = "vt",
+        width  = W_WIDTH - 0,
         height = W_HEIGHT - header.height - 40,
-        gap = 15,
-        bias = "center"
+        gap    = 15,
+        bias   = "center"
     }
 
     for _,item in ipairs(itemData.Items) do

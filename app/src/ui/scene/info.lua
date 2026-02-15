@@ -35,18 +35,19 @@ function info:load(data)
 
     local layer = badr:root {}
     local base = scroll {
-        type = "vt",
-        width = W_WIDTH - 0,
-        height = W_HEIGHT - header.height - 40,
-        gap = 30,
-        bias = "center",
+        id        = "info",
+        type      = "vt",
+        width     = W_WIDTH - 0,
+        height    = W_HEIGHT - header.height - 40,
+        gap       = 30,
+        bias      = "center",
         lockFocus = true,
     }
     + text {
-        id = "title",
-        text = itemData.Name,
+        id    = "title",
+        text  = itemData.Name,
         width = W_WIDTH - 40,
-        font = "large",
+        font  = "large",
         align = "left"
     }
 
@@ -64,13 +65,14 @@ function info:load(data)
             end
 
             streams[stream.Type][#streams[stream.Type]+1] = button {
-                stype = stream.Type,
-                index = stream.Index,
+                stype     = stream.Type,
+                index     = stream.Index,
                 isDefault = stream.IsDefault,
-                text = stream.DisplayTitle,
-                align = "left",
-                lmg = 10,
-                rmg = 10,
+                text      = stream.DisplayTitle,
+                align     = "left",
+                lmg       = 10,
+                rmg       = 10,
+
                 onFocus = function (s)
                     selected.streams[s.stype] = s.index
                 end,
@@ -102,22 +104,22 @@ function info:load(data)
 
     if #itemData.Taglines > 0 then
         base = base + text {
-            id = "tagline",
-            text = itemData.Taglines[1],
+            id    = "tagline",
+            text  = itemData.Taglines[1],
             width = W_WIDTH - 40,
-            wrap = true,
-            font = "normal",
+            wrap  = true,
+            font  = "normal",
             align = "left"
         }
     end
 
     if itemData.Overview then
         base = base + text {
-            id = "overview",
-            text = itemData.Overview,
+            id    = "overview",
+            text  = itemData.Overview,
             width = W_WIDTH - 40,
-            wrap = 8,
-            font = "normal",
+            wrap  = 8,
+            font  = "normal",
             align = "left",
             color = "primary"
         }
@@ -125,7 +127,7 @@ function info:load(data)
 
     if #itemData.Genres > 0 then
         local label = text {
-            text = "Genres",
+            text  = "Genres",
             align = "left",
             width = 100
         }
@@ -137,11 +139,11 @@ function info:load(data)
             }
             + label
             + text {
-                text = table.concat(itemData.Genres, ", "),
+                text  = table.concat(itemData.Genres, ", "),
                 align = "left",
                 color = "primary",
                 width = W_WIDTH - label.width - 40,
-                wrap = 2
+                wrap  = 2
             }
         )
     end
@@ -153,7 +155,7 @@ function info:load(data)
         end
 
         local label = text {
-            text = "Studios",
+            text  = "Studios",
             align = "left",
             width = 100
         }
@@ -171,11 +173,11 @@ function info:load(data)
             }
             + label
             + text {
-                text = table.concat(studios, ", "),
+                text  = table.concat(studios, ", "),
                 align = "left",
                 color = "primary",
                 width = W_WIDTH - label.width - 40,
-                wrap = 2
+                wrap  = 2
             }
         )
     end

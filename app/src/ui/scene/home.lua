@@ -3,6 +3,7 @@ local card   = require "src.ui.component.card"
 local client = require "src.client"
 local header = require "src.ui.component.header"
 local image  = require "src.ui.component.image"
+local log    = require "src.helpers.log"
 local scroll = require "src.ui.component.scroll"
 local text   = require "src.ui.component.text"
 local ui     = require "src.ui.scene"
@@ -58,7 +59,7 @@ end
 local function getRecentlyAdded(name, id, data)
     local recentCards = scroll {
         type = "hz",
-        id = id.."_latest",
+        id = "recently_added_"..id,
         gap = 15,
         width = W_WIDTH - 40,
         bias = "center"
@@ -118,7 +119,8 @@ function home:load(data)
         return client.user:getUserViews():decode()
     end)
 
-    local menu = scroll {
+    local menu = scroll:multi {
+        id = "home_menu",
         type = "vt",
         gap = 20,
         height = W_HEIGHT - header.height - 40,

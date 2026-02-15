@@ -37,8 +37,8 @@ function login:load(data)
 
     if not client.connected then
 
-        if  config.client:read("Authentication", "method") == "Basic" then
-            -- Authenticate with username and password.
+        -- Basic Authentication
+        if config.client:read("Authentication", "method") == "Basic" then
             client:basicAuth()
 
             if not client.connected then
@@ -46,10 +46,18 @@ function login:load(data)
                 love.event.push("quit")
             end
 
+        -- QuickConnect
         else
+            ::initqc::
             client:initQuickConnect()
 
             if not client.connected then
+
+                if not client.qcData then
+                    log.trace("Failed to initialize quick connect to %s.", client.session.host)
+                    goto initqc
+                end
+
                 log.debug("Initiated QuickConnect to %s.", client.session.host)
                 code = love.graphics.newText(font.logo_large, client.qcData.code)
                 local w, h = code:getDimensions()

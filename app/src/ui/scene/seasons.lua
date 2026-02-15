@@ -28,10 +28,11 @@ function seasons:load(data)
 
     if #itemData.Items > 1 then
         local seasonCards = scroll {
-            type = "hz",
-            width = W_WIDTH - 40,
-            gap = 15,
-            bias = "center",
+            id        = "seasons",
+            type      = "hz",
+            width     = W_WIDTH - 40,
+            gap       = 15,
+            bias      = "center",
             lockFocus = true
         }
 
