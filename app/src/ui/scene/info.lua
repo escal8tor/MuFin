@@ -1,12 +1,13 @@
-local badr   = require "src.ui.component.badr"
-local button = require "src.ui.component.button"
-local client = require "src.client"
-local header = require "src.ui.component.header"
-local scroll = require "src.ui.component.scroll"
-local select = require "src.ui.component.select"
-local text   = require "src.ui.component.text"
-local ui     = require "src.ui.scene"
-local utils  = require "src.external.utils"
+local accordion = require "src.ui.component.accordion"
+local badr      = require "src.ui.component.badr"
+local button    = require "src.ui.component.button"
+local client    = require "src.client"
+local header    = require "src.ui.component.header"
+local scroll    = require "src.ui.component.scroll"
+local select    = require "src.ui.component.select"
+local text      = require "src.ui.component.text"
+local ui        = require "src.ui.scene"
+local utils     = require "src.external.utils"
 
 --- Media stream selections
 local selected = {
@@ -40,8 +41,7 @@ function info:load(data)
         width     = W_WIDTH - 0,
         height    = W_HEIGHT - header.height - 40,
         gap       = 30,
-        bias      = "center",
-        lockFocus = true,
+        bias      = "center"
     }
     + text {
         id    = "title",
@@ -65,6 +65,7 @@ function info:load(data)
             end
 
             streams[stream.Type][#streams[stream.Type]+1] = button {
+                id        = stream.Type:lower().."_"..tostring(stream.Index),
                 stype     = stream.Type,
                 index     = stream.Index,
                 isDefault = stream.IsDefault,
@@ -75,31 +76,40 @@ function info:load(data)
 
                 onFocus = function (s)
                     selected.streams[s.stype] = s.index
+                    header.reset()
+                    header.append("DP", "Select")
+                    header.append("B", (#ui.stack.active > 1) and "Back" or "Quit")
+                    header.updatePosition()
                 end,
             }
         end
 
-        for i, label in ipairs({"Video","Audio","Subtitle"}) do
+        if streams then
+            local streamsList = badr {
+                id     = "streams",
+                column = true,
+                gap    = 5,
+            }
 
-            if streams[label] ~= nil then
+            for _, streamType in ipairs({"Video","Audio","Subtitle"}) do
 
-                if i > 1 then
-                    base.gap = 5
+                if streams[streamType] ~= nil then
+                    local label = streamType:lower()
+                    local streamSelect = select.hzScr(
+                        streams[streamType],
+                        { id = label.."_streams", width =  W_WIDTH - 140 }
+                    )
+
+                    streamsList = streamsList + (
+                        badr { id = label.."_container", row = true, gap = 0 }
+                        + text { id = label.."_label", text = streamType, width = 100 }
+                        + streamSelect
+                    )
                 end
-
-                local streamSelect = select.hzScr(
-                    streams[label], { width =  W_WIDTH - 140 }
-                )
-
-                base = base + (
-                    badr { row = true, gap = 0 }
-                    + text { text = label, width = 100 }
-                    + streamSelect
-                )
             end
-        end
 
-        base.gap = 30
+            base = base + streamsList
+        end
     end
 
     if #itemData.Taglines > 0 then
@@ -114,84 +124,86 @@ function info:load(data)
     end
 
     if itemData.Overview then
-        base = base + text {
+        local overview = accordion {
             id    = "overview",
             text  = itemData.Overview,
             width = W_WIDTH - 40,
             wrap  = 8,
-            font  = "normal",
-            align = "left",
-            color = "primary"
-        }
-    end
-
-    if #itemData.Genres > 0 then
-        local label = text {
-            text  = "Genres",
-            align = "left",
-            width = 100
+            align = "left"
         }
 
-        base = base + (
-            badr {
-                row = true,
-                gap = 0
-            }
-            + label
-            + text {
-                text  = table.concat(itemData.Genres, ", "),
-                align = "left",
-                color = "primary",
-                width = W_WIDTH - label.width - 40,
-                wrap  = 2
-            }
-        )
+        overview:setContainerScroll(base)
+
+        base = base + overview
     end
 
-    if #itemData.Studios > 0 then
+    if (#itemData.Genres > 0) or (#itemData.Studios > 0) then
+        local miscInfo = badr {
+            id = "misc_info",
+            column = true,
+            gap = 5
+        }
+
 
         if #itemData.Genres > 0 then
-            base.gap = 5
-        end
-
-        local label = text {
-            text  = "Studios",
-            align = "left",
-            width = 100
-        }
-
-        local studios = {}
-
-        for _,studio in ipairs(itemData.Studios) do
-            studios[#studios+1] = studio.Name
-        end
-
-        base = base + (
-            badr {
-                row = true,
-                gap = 0
-            }
-            + label
-            + text {
-                text  = table.concat(studios, ", "),
+            local label = text {
+                text  = "Genres",
                 align = "left",
-                color = "primary",
-                width = W_WIDTH - label.width - 40,
-                wrap  = 2
+                width = 100
             }
-        )
+
+            miscInfo = miscInfo + (
+                badr {
+                    row = true,
+                    gap = 0
+                }
+                + label
+                + text {
+                    text  = table.concat(itemData.Genres, ", "),
+                    align = "left",
+                    color = "primary",
+                    width = W_WIDTH - label.width - 40,
+                    wrap  = 2
+                }
+            )
+        end
+
+        if #itemData.Studios > 0 then
+            local label = text {
+                text  = "Studios",
+                align = "left",
+                width = 100
+            }
+
+            local studios = {}
+
+            for _,studio in ipairs(itemData.Studios) do
+                studios[#studios+1] = studio.Name
+            end
+
+            miscInfo = miscInfo + (
+                badr {
+                    row = true,
+                    gap = 0
+                }
+                + label
+                + text {
+                    text  = table.concat(studios, ", "),
+                    align = "left",
+                    color = "primary",
+                    width = W_WIDTH - label.width - 40,
+                    wrap  = 2
+                }
+            )
+        end
+
+        base = base + miscInfo
     end
 
     layer = layer + base
     layer:updatePosition(20, header.height + 20)
     layer:focusFirstElement()
     self:insertLayer(layer)
-end
-
-function info:enter(data)
-    header.reset()
-    header.append("B", "Back")
-    header.updatePosition()
 end
 
 function info:keypressed(key)

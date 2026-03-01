@@ -1,9 +1,7 @@
-local badr   = require "src.ui.component.badr"
 local config = require "src.external.config"
-local text   = require "src.ui.component.text"
+local header = require "src.ui.component.header"
 local scroll = require "src.ui.component.scroll"
-local utils  = require "src.external.utils"
-local button = require "src.ui.component.button"
+local ui     = require "src.ui.scene"
 
 --- @class select
 local select = {}
@@ -27,20 +25,20 @@ function select.list(items, props)
         end
 
         if item.action then
-            item.nfill = "SELECT_LIST:NORMAL_FILL"
-            item.ffill = "SELECT_LIST:FOCUSED_FILL"
-            item.ntext = "SELECT_LIST:NORMAL_TEXT"
-            item.ftext = "SELECT_LIST:FOCUSED_TEXT"
+            item.nfill = "SELECT_LIST:NORMAL_BG"
+            item.ffill = "SELECT_LIST:FOCUSED_BG"
+            item.ntext = "SELECT_LIST:NORMAL_FG"
+            item.ftext = "SELECT_LIST:FOCUSED_FG"
         end
     end
 
     local component = scroll {
+        id = props.id,
         type = "vt",
         gap = props.gap,
         bias = "lazy",
         width = width + (props.border*2),
         height = height + (props.border*2),
-        lockFocus = true,
         color = props.color or "UI:BACKGROUND",
         tmg = props.border,
         rmg = props.border,
@@ -88,15 +86,16 @@ function select.hzScr(items, props)
     for i, item in pairs(items) do
         width = math.max(item.width + 40, width)
         height = math.max(height, item.height)
-        item.nfill = "SELECT_HZSCR:NORMAL_FILL"
-        item.ffill = "SELECT_HZSCR:FOCUSED_FILL"
-        item.ntext = "SELECT_HZSCR:NORMAL_TEXT"
-        item.ftext = "SELECT_HZSCR:FOCUSED_TEXT"
+        item.nfill = "SELECT_HZSCR:NORMAL_BG"
+        item.ffill = "SELECT_HZSCR:FOCUSED_BG"
+        item.ntext = "SELECT_HZSCR:NORMAL_FG"
+        item.ftext = "SELECT_HZSCR:FOCUSED_FG"
     end
 
     width = props.width or width
 
     local component = scroll {
+        id = props.id,
         type = "hz",
         bias = "lazy",
         width = width,

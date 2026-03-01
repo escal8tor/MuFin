@@ -119,12 +119,13 @@ function home:load(data)
         return client.user:getUserViews():decode()
     end)
 
-    local menu = scroll:multi {
+    local menu = scroll {
         id = "home_menu",
         type = "vt",
         gap = 20,
         height = W_HEIGHT - header.height - 40,
         bias = "center",
+        lockFocus = true
     }
 
     menu = menu + getUserViews(viewData)

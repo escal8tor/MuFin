@@ -2,10 +2,11 @@
 local math   = require "math"
 local scroll = require "src.ui.component.scroll"
 
---- @class grid:scroll
+--- @class grid : scroll
 --- 
---- @field madDime number
+--- @field maxDime number Upper limit of dimensions in not-scroll axis
 --- 
+--- Sub type of scroll that arranges child components in a grid pattern.
 local grid = scroll {}
 grid.__index = grid
 

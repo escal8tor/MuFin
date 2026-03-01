@@ -18,10 +18,10 @@ function button:new(props)
         focusable = props.focusable or true,
         align     = props.align or "center",
         cr        = props.cornerRadius or 0,
-        nfill     = props.nfill or "BUTTON:NORMAL_FILL",
-        ntext     = props.ntext or "BUTTON:NORMAL_TEXT",
-        ffill     = props.ffill or "BUTTON:FOCUSED_FILL",
-        ftext     = props.ftext or "BUTTON:FOCUSED_TEXT"
+        nfill     = props.nfill or "BUTTON:NORMAL_BG",
+        ntext     = props.ntext or "BUTTON:NORMAL_FG",
+        ffill     = props.ffill or "BUTTON:FOCUSED_BG",
+        ftext     = props.ftext or "BUTTON:FOCUSED_FG"
     }
 
     for key, value in pairs(props) do

@@ -28,24 +28,6 @@ local function normColor(id)
     return id
 end
 
---- Normalize font property
----
---- @param name string? Font name
---- 
---- @return string name Normalized font name
-local function normFont(name)
-
-    if type(name) == "string" then
-        name = name:lower()
-        assert(fonts[name], "No such font: "..name)
-
-    else
-        name = "normal"
-    end
-
-    return name
-end
-
 --#endregion helpers
 
 --#region text
@@ -84,7 +66,7 @@ function text:new(props)
         content = props.text,
         width   = props.width,
         height  = props.height,
-        font    = normFont(props.font),
+        font    = text.normFont(props.font),
         color   = normColor(props.color),
         delay   = props.delay,
         align   = props.align or "left",
@@ -113,6 +95,24 @@ function text:new(props)
 
     --- @type text
     return setmetatable(badr(proto), text)
+end
+
+--- Normalize font property
+---
+--- @param name string? Font name
+--- 
+--- @return string name Normalized font name
+function text.normFont(name)
+
+    if type(name) == "string" then
+        name = name:lower()
+        assert(fonts[name], "No such font: "..name)
+
+    else
+        name = "normal"
+    end
+
+    return name
 end
 
 --- Calculate content dimensions.
@@ -289,36 +289,15 @@ end
 
 --#endregion text
 
---#region collapsibleText
-
---- @class collapsibleText : text
---- 
---- @field collapsed  boolean Set while text is expanded
---- @field fullHeight number  Uncollapsed text height
---- 
---- UI component for collapsible text area.
-local collapsibleText = text:new{}
-collapsibleText.__index = collapsibleText
-
---- Create new collapsibleText component.
---- 
---- @param props table Component properties
---- 
---- @return collapsibleText collapsibleText New text object.
-function collapsibleText:new(props)
-    local proto = { focusable = true }
-
-    local object = setmetatable(text:new(proto), collapsibleText)
-
-    return object
-end
-
---#endregion collapsibleText
-
 --- @overload fun(props: table): text
 local export = setmetatable(
-    { new = text.new },
-    { __call = function (t, ...) return text:new(...) end }
+    {
+        new = text.new,
+    },
+    {
+        __call = function (t, ...) return text:new(...) end,
+        __index = text
+    }
 )
 
 return export

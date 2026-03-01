@@ -21,17 +21,12 @@ SET_VAR "system" "foreground_process" "mpv"
 
 $GPTOKEYB2 "mpv" -c "$RUN_PATH/res/input/gp2k_player.ini" &
 
-case "$(GET_VAR "device" "board/name")" in
-
-    tui*)
-        export LD_LIBRARY_PATH="$RUN_PATH/bin/libs.aarch64/mpv/:$LD_LIBRARY_PATH"
-        $RUN_PATH/bin/mpv --fs $@ #--msg-level=all=debug &> data/playback.log
-        ;;
-
-    *)
-        /usr/bin/mpv --fs $@ #--msg-level=all=debug &> data/playback.log
-        ;;
-esac
+if [[ -f "$RUNPATH/bin/mpv" ]]; then
+    export LD_LIBRARY_PATH="$RUN_PATH/bin/libs.aarch64/mpv/:$LD_LIBRARY_PATH"
+    $RUN_PATH/bin/mpv --fs $@ #--msg-level=all=debug &> data/playback.log
+else
+    /usr/bin/mpv --fs $@ #--msg-level=all=debug &> data/playback.log
+fi
 
 pkill -9 -f gptokeyb2
 $GPTOKEYB2 "love" -c "$RUN_PATH/res/input/gp2k_client.ini" &

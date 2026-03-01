@@ -1,5 +1,7 @@
 ---@diagnostic disable: return-type-mismatch, need-check-nil, assign-type-mismatch
-local flux = require "src.external.flux"
+local flux  = require "src.external.flux"
+local log   = require "src.helpers.log"
+local utils = require "src.external.utils"
 
 --- Badr
 ---
@@ -151,6 +153,7 @@ function badr.__sub(self, component)
 
             if child.id == component.id then
                 table.remove(self.children, index)
+                self:refreshLayout()
             end
         end
     end
@@ -160,8 +163,7 @@ end
 
 --- Get child by ID
 ---
---- Returns child of this object with `id`,
---- or `nil` on miss.
+--- Returns child of this object with `id`, or `nil` on miss.
 ---
 --- @param self badr
 --- @param id string component identifier
@@ -180,8 +182,7 @@ end
 
 --- Get any child by ID
 ---
---- Returns child of this object, or any of it's children,
---- with `id`. Returns `nil` on miss.
+--- Returns decendent of this object with `id`. Returns `nil` on miss.
 ---
 --- @param self badr
 --- @param id string component identifier
@@ -301,14 +302,14 @@ end
 
 --- Adds delta to object's coordinates.
 ---
---- @param x integer Delta X.
---- @param y integer Delta Y.
-function badr:updatePosition(x, y)
-    self.x = self.x + x
-    self.y = self.y + y
+--- @param dx integer Delta X.
+--- @param dy integer Delta Y.
+function badr:updatePosition(dx, dy)
+    self.x = self.x + dx
+    self.y = self.y + dy
 
     for _, child in ipairs(self.children) do
-        child:updatePosition(x, y)
+        child:updatePosition(dx, dy)
     end
 end
 
@@ -322,6 +323,58 @@ function badr:setPosition(x, y)
 
     for _, child in ipairs(self.children) do
         child:updatePosition(dx,dy)
+    end
+end
+
+--- Update size and reposition children.
+--- 
+--- Repositions children according to their dimensions, and updates size to fit.
+function badr:refreshLayout()
+    if #self.children < 1 then return end
+    local gap = self.gap or 0
+    local x = self.x + self.lmg
+    local y = self.y + self.tmg
+    local mo = 0 -- max size in other axis. 
+    local ts = 0 -- total size in growth axis.
+
+    -- Adjust child positioning and size.
+    for i, child in ipairs(self.children) do
+        child.x = x
+        child.y = y
+
+        if self.row then
+            ts = ts + child.width
+            mo = math.max(mo, child.height)
+
+            if i < #self.children then
+                x = x + child.width + gap
+            end
+        end
+
+        if self.column then
+            ts = ts + child.height
+            mo = math.max(mo, child.width)
+
+            if i < #self.children then
+                y = y + child.height + gap
+            end
+        end
+    end
+
+    --- Update size (explicit opt-out).
+    if self.autoSize ~= false then
+        if isColumn then
+            self.height = self.tmg + ts + gap * (#self.children - 1) + self.bmg
+            self.width  = self.lmg + mo + self.rmg
+        else
+            self.width  = self.lmg + ts + gap * (#self.children - 1) + self.rmg
+            self.height = self.tmg + mo + self.bmg
+        end
+    end
+
+    --- Reposition co-ranked objects.
+    if self.parent then
+        self.parent:refreshLayout()
     end
 end
 
@@ -448,21 +501,26 @@ end
 ---
 --- @return badr|nil next next focusable component
 function badr:getNextFocusable(direction)
-    local root = self:getRoot() -- Focus within the current root context
-    local focusables = badr.gatherFocusableDecendents(root)
+    local focused = self:getRoot().focusedElement
+    local focusables = badr.gatherFocusableDecendents(self)
+    local idx = 1
 
-    for idx, component in ipairs(focusables) do
+    while idx <= #focusables do
 
-        if component == root.focusedElement then
-            if direction == "previous" then
-                nextIndex = idx > 1 and idx - 1 or #focusables
-            elseif direction == "next" then
-                nextIndex = idx < #focusables and idx + 1 or 1
-            end
-
-            return focusables[nextIndex]
+        if focusables[idx] == focused then
+            break
         end
+
+        idx = idx + 1
     end
+
+    if direction == "previous" then
+        idx = idx > 1 and idx - 1 or #focusables
+    elseif direction == "next" then
+        idx = idx < #focusables and idx + 1 or 1
+    end
+
+    return focusables[idx]
 end
 
 --- Get Nth next focusable component.
@@ -513,6 +571,8 @@ function badr:focusFirstElement()
         root:setFocus(child)      -- Set focus to the first focusable element
         break
     end
+
+    return self:getRoot().focusedElement ~= nil
 end
 
 --- Default handler for keyboard navigation.

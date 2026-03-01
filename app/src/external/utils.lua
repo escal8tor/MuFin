@@ -20,7 +20,6 @@
 --- modifed by escal8tor
 local nativefs = require "src.external.nativefs"
 
-
 local utils = {}
 
 --- Generate a GUID.
@@ -344,6 +343,13 @@ function utils.preq(request, onFatal)
     end
 
     return response
+end
+
+function utils.find(t, value)
+    for i, v in ipairs(t) do
+        if v == value then return i end
+    end
+    return nil
 end
 
 return utils
