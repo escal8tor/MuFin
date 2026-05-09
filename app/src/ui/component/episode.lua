@@ -2,6 +2,7 @@ local badr   = require "src.ui.component.badr"
 local font   = require "src.ui.component.font"
 local header = require "src.ui.component.header"
 local image  = require "src.ui.component.image"
+local log    = require "src.helpers.log"
 local play   = require "src.helpers.playback"
 local text   = require "src.ui.component.text"
 local ui     = require "src.ui.scene"
@@ -20,12 +21,20 @@ local normal_height = font.normal:getHeight()
 local episode = badr {}
 episode.__index = episode
 
-function episode:new(item)
+function episode:new(item, props)
+    props = props or {}
+
+    local outerMargin = props.outerMargin or (W_HEIGHT / 22)
+    local innerMargin = props.innerMargin or (outerMargin * 0.38)
+    local textOffset = props.textOffset or (innerMargin / 5)
+    local gap = props.gap or 15
+
     local proto = {
         id        = item.Id,
         focusable = true,
         row       = true,
-        gap       = 15
+        gap       = gap,
+        lp        = nil
     }
 
     local width, height = utils.dimensions {
@@ -51,14 +60,14 @@ function episode:new(item)
     proto.title = text {
         id    = "title",
         text  = string.format("%s %s", item.IndexNumber, item.Name),
-        width = W_WIDTH - width - 50,
+        width = W_WIDTH - width - outerMargin- innerMargin,
         font  = "normal",
         align = "left"
     }
 
     local title = badr {
         column = true,
-        gap    = 2
+        gap    = textOffset
     }
     + proto.title
 
@@ -69,7 +78,7 @@ function episode:new(item)
         proto.runtime = text {
             id    = item.Id.."_runtime",
             text  = string.format("%dm Ends at %s", runtime, endtime:upper()),
-            width = W_WIDTH - width - 50,
+            width = W_WIDTH - width - outerMargin - innerMargin,
             font  = "normal",
             color = "primary",
             align = "left"
@@ -87,7 +96,7 @@ function episode:new(item)
         proto.runtime = text {
             id    = item.Id.."_runtime_not_found",
             text  = " Null runtime",
-            width = W_WIDTH - width - err_icon.width - 50,
+            width = W_WIDTH - width - err_icon.width - outerMargin - innerMargin,
             font  = "normal",
             color = "error",
             align = "left"
@@ -96,7 +105,7 @@ function episode:new(item)
         title = title + (
             badr {
                 row = true,
-                gap = 0
+                gap = textOffset
             }
             + err_icon
             + proto.runtime
@@ -108,7 +117,7 @@ function episode:new(item)
     proto.overview = text {
         id     = item.Id.."_overview",
         text   = item.Overview or "",
-        width  = W_WIDTH - width - 50,
+        width  = W_WIDTH - width - outerMargin - innerMargin,
         wrap   = wrap, -- 6,
         font   = "normal",
         color  = "secondary",
@@ -118,7 +127,7 @@ function episode:new(item)
 
     local itemText = badr {
         column = true,
-        gap    = 8
+        gap    = textOffset
     }
     + title
     + proto.overview
@@ -136,7 +145,16 @@ end
 function episode:onKeyPress(key)
 
     if key == "x" or key == "t" or key == "s" then
-        ui.stack:push("play", { itemId = self.id, static = key == "s", transcode = key == "t" })
+
+        -- On some devices, the last key pressed may repeat after playback.
+        -- Imposing a cooldown prevents this from looping playback.
+        if nil == self.lp or (love.timer.getTime() - self.lp) >= 0.2 then
+            ui.stack:push("play", { itemId = self.id, static = key == "s", transcode = key == "t" })
+        else
+            log.debug("input ignored: within cooldown.")
+        end
+
+        self.lp = love.timer.getTime()
 
     elseif key == "c" then
         ui.stack:push("info", { itemId = self.id } )

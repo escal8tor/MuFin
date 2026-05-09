@@ -1,5 +1,6 @@
 local client   = require "src.client"
 local json     = require "src.external.json"
+local log      = require "src.helpers.log"
 local nativefs = require "src.external.nativefs"
 local ui       = require "src.ui.scene"
 
@@ -43,7 +44,13 @@ end
 --- 
 --- @return string arguments Relevant arguments to MPV.
 local function getAttachments(source)
-    if not (string.match(DEVICE_NAME, "tui") and source.MediaAttachments) then return "" end
+    if not (
+        ( DEVICE_NAME:find("tui") or DEVICE_NAME:find("rocknix") ) and
+        source.MediaAttachments
+    ) then return "" end
+
+    log.debug("Downloading attachments.")
+
     local path = "data/playback/attachments"
 
     if not nativefs.getInfo(path) then
@@ -61,11 +68,14 @@ local function getAttachments(source)
 end
 
 local function startPlayback(data)
-    local deviceProfile = json.decode(nativefs.read("res/static/device_profile.json"))
+    local dpPath = "res/static/device_profile_"..OS_NAME:lower()..".json"
+    local deviceProfile = json.decode(nativefs.read(dpPath))
     local path = "data/playback"
     local cmdline
 
     nativefs.createDirectory(path)
+
+    log.trace("Requesting playback for: %s", data.itemId)
 
     ::force_transcode::
     local info = client.media:getPostedPlaybackInfo( data.itemId, {
@@ -74,9 +84,12 @@ local function startPlayback(data)
         EnableTranscoding = true
     }):decode()
 
+    -- TODO: (feat.) add media source selector when multiple sources available.
     for _, source in ipairs(info.MediaSources) do
 
         if (data.static or source.SupportsDirectStream or source.SupportsDirectPlay) and not data.transcode then
+            log.trace("DirectPlay supported.")
+
             -- Construct url for direct playback
             cmdline = string.format(
                 "res/scripts/mpv_launch.sh '%s'",
@@ -86,6 +99,11 @@ local function startPlayback(data)
         else
 
             if source.TranscodingUrl then
+                log.trace(
+                    "Transcoding, reasons: %s",
+                    string.match(source.TranscodingUrl, "TranscodeReasons=(.*)")
+                )
+
                 cmdline = string.format(
                     "res/scripts/mpv_launch.sh '%s' %s %s",
                     client.session.host..source.TranscodingUrl,
@@ -94,24 +112,29 @@ local function startPlayback(data)
                 )
 
             elseif deviceProfile.DirectPlayProfiles then
+                log.trace("DirectPlay supported, but Transcode requested. Forcing transcode.")
                 deviceProfile.DirectPlayProfiles = {}
+
                 goto force_transcode
 
             else
+                log.error("playback failed: no compatable sources.")
+
                 goto cleanup
             end
         end
 
-        -- nativefs.write("data/command.txt", cmdline)
         break
     end
 
     if cmdline then
+        nativefs.write("data/command.txt", cmdline)
+        log.trace("running playback command.")
         os.execute(cmdline)
     end
 
     ::cleanup::
-    os.execute("rm -rf "..path)
+    os.execute('rm -rf '..path)
 
 end
 

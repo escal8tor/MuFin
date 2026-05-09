@@ -26,19 +26,24 @@ function seasons:load(data)
         ):decode()
     end)
 
+    local outerMargin = W_HEIGHT / 22
+    local innerMargin = outerMargin * 0.38
+    local textHeight = W_HEIGHT / 34
+    local textOffset = innerMargin / 5
+
     if #itemData.Items > 1 then
         local seasonCards = scroll {
             id        = "seasons",
             type      = "hz",
-            width     = W_WIDTH - 40,
-            gap       = 15,
+            width     = W_WIDTH - outerMargin,
+            gap       = innerMargin,
             bias      = "center",
             lockFocus = true
         }
 
         for _, item in ipairs(itemData.Items) do
             local width, height = utils.dimensions {
-                height = (W_HEIGHT - header.height - 65),
+                height = W_HEIGHT - textHeight - textOffset - header.height - outerMargin,
                 aspect = 2/3
             }
 
@@ -46,12 +51,13 @@ function seasons:load(data)
                 item = item,
                 width = width,
                 height = height,
+                gap = textOffset,
                 seriesId = data.seriesId
             }
         end
 
         local layer = badr:root { row = true } + seasonCards
-        layer:updatePosition(20, header.height + 20)
+        layer:updatePosition((outerMargin / 2), header.height + (outerMargin / 2))
         layer:focusFirstElement()
         self:insertLayer(layer)
 

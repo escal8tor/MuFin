@@ -37,10 +37,10 @@ end
 --- @class text : badr
 --- comment
 --- 
---- @field protected scroll scrDirection?    Enables scrolling in specified direction when set
---- @field protected vx     number           Viewport X coordinate
---- @field protected vy     number           Viewport Y coordinate
---- @field protected sEnd   integer          Index for end of visible content when viewport is a rest
+--- @field protected scroll scrDirection? Enables scrolling in specified direction when set
+--- @field protected vx     number        Viewport X coordinate
+--- @field protected vy     number        Viewport Y coordinate
+--- @field protected sEnd   integer       Index for end of visible content when viewport is a rest
 --- 
 --- @field group   flux?  Flux group for animation
 --- @field content string Text content

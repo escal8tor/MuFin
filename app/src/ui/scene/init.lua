@@ -1,6 +1,7 @@
 ---@diagnostic disable: param-type-mismatch
 local config   = require "src.external.config"
 local header   = require "src.ui.component.header"
+local log      = require "src.helpers.log"
 local nativefs = require "src.external.nativefs"
 
 local scene, stack, export
@@ -133,7 +134,7 @@ end
 --- Remove a layer at position.
 ---
 --- @param pos integer? Layer index (default: last)
---- 
+---
 --- @return badr root
 function scene:removeLayer(pos)
     local focused
@@ -230,6 +231,7 @@ function stack:pop(data)
     data = data or {}
 
     if #self.active > 1 then
+        log.trace("(pop) closing scene: %d", #self.active)
         self.active[#self.active]:close()
         self.active[#self.active] = nil
     end

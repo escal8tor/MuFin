@@ -2,6 +2,7 @@
 local config   = require "src.external.config"
 local client   = require "src.client"
 local json     = require "src.external.json"
+local log      = require "src.helpers.log"
 local nativefs = require "src.external.nativefs"
 
 local function getSubtitles(itemId, source)
@@ -90,7 +91,7 @@ local function play(args)
             end
         end
 
-        -- nativefs.write("data/command.txt", cmdline)
+        nativefs.write("data/command.txt", cmdline)
         break
     end
 
@@ -100,6 +101,7 @@ local function play(args)
 
     ::cleanup::
     os.execute("rm -rf "..path)
+    os.execute("sleep "..tonumber(1))
     love.window.setMode(W_WIDTH, W_HEIGHT, { resizable = true })
 end
 

@@ -1,0 +1,71 @@
+{
+    "CodecProfiles": [
+        {
+            "Codec": "h264",
+            "Conditions": [
+                {
+                    "Condition": "LessThanEqual",
+                    "IsRequired": false,
+                    "Property": "VideoLevel",
+                    "Value": "51"
+                }
+            ],
+            "Type": "Video"
+        },
+        {
+            "Codec": "hevc",
+            "Conditions": [
+                {
+                    "Condition": "LessThanEqual",
+                    "IsRequired": false,
+                    "Property": "VideoLevel",
+                    "Value": "93"
+                }
+            ],
+            "Type": "Video"
+        }
+    ],
+    "ContainerProfiles": [],
+	"DirectPlayProfiles": [
+        { 
+            "Type": "Video",
+            "VideoCodec": "h264,hevc,mpeg4,mpeg2video,vc1,vp9" 
+        },
+        { "Type": "Audio" },
+        { "Type": "Photo" }
+    ],
+    "MaxStaticBitrate": 100000000,
+    "MaxStreamingBitrate": 120000000,
+    "MusicStreamingTranscodingBitrate": 384000,
+    "Name": "MuFin",
+	"ResponseProfiles": [],
+    "SubtitleProfiles": [
+        { "Format": "srt",    "Method": "Embed"    },
+        { "Format": "srt",    "Method": "External" },
+        { "Format": "ass",    "Method": "Embed"    },
+        { "Format": "ass",    "Method": "External" },
+        { "Format": "sub",    "Method": "Embed"    },
+        { "Format": "sub",    "Method": "External" },
+        { "Format": "ssa",    "Method": "Embed"    },
+        { "Format": "ssa",    "Method": "External" },
+        { "Format": "smi",    "Method": "Embed"    },
+        { "Format": "smi",    "Method": "External" },
+        { "Format": "pgssub", "Method": "Embed"    },
+        { "Format": "pgssub", "Method": "External" },
+        { "Format": "dvdsub", "Method": "Embed"    },
+        { "Format": "dvdsub", "Method": "External" },
+        { "Format": "pgs",    "Method": "Embed"    },
+        { "Format": "pgs",    "Method": "External" }
+    ],
+    "TranscodingProfiles": [
+        { 
+            "Type": "Video",
+            "Container": "ts",
+            "VideoCodec": "h264,mpeg4,mpeg2video,vc1,hevc",
+            "AudioCodec": "aac,mp3,ac3,opus,flac,vorbis",
+            "MaxAudioChannels": 2
+        },
+        {"Type": "Audio"},
+        {"Type": "Photo", "Container": "jpeg"}
+    ]
+}

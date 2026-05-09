@@ -2,16 +2,18 @@ local nativefs = require "src.external.nativefs"
 
 local muos = {}
 
---- Get device model name (e.g. trimui-brick).
+--- Get device model name (e.g. tui-brick).
 --- 
 --- @return string name
 function muos.getDeviceName()
 
-    for name in nativefs.lines("/opt/muos/device/config/board/name") do
-        return name
-    end
+    local ok, name = pcall(function()
+        for name in nativefs.lines("/opt/muos/device/config/board/name") do
+            return name
+        end
+    end)
 
-    return "muos"
+    return ok and name or "rocknix"
 end
 
 --- Get screen resolution.
@@ -21,12 +23,12 @@ end
 function muos.getResolution()
     local width, height
 
-    for value in nativefs.lines("/opt/muos/device/config/mux/width") do
-        width = tonumber(value) or 640
-    end
+    local ok, _ = pcall(function()
+        width, height = love.window.getDesktopDimensions(1)
+    end)
 
-    for value in nativefs.lines("/opt/muos/device/config/mux/height") do
-        height = tonumber(value) or 480
+    if not ok then
+        width, height = 640, 480
     end
 
     return width, height

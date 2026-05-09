@@ -1,6 +1,7 @@
 local badr   = require "src.ui.component.badr"
 local header = require "src.ui.component.header"
 local image  = require "src.ui.component.image"
+local log    = require "src.helpers.log"
 local play   = require "src.helpers.playback"
 local text   = require "src.ui.component.text"
 local ui     = require "src.ui.scene"
@@ -80,11 +81,12 @@ function card:new(props)
         id        = props.item.Id,
         --src       = item,
         column    = true,
-        gap       = 5,
+        gap       = props.gap or 5,
         focusable = true,
         isFolder  = props.item.IsFolder,
         type      = props.item.Type,
-        seriesId  = props.seriesId
+        seriesId  = props.seriesId,
+        lp        = nil
     }
 
     local imageProps = {
@@ -154,11 +156,21 @@ function card:onKeyPress(key)
             })
 
         elseif self.type == "Movie" or self.type == "Episode" then
-            ui.stack:push( "play", {
-                itemId = self.id,
-                static = key == "s",
-                transcode = key == "t"
-            })
+
+            -- On some devices, the last key pressed may repeat after playback.
+            -- Imposing a cooldown prevents this from looping playback.
+            if nil == self.lp or (love.timer.getTime() - self.lp) >= 0.2 then
+
+                ui.stack:push( "play", {
+                    itemId = self.id,
+                    static = key == "s",
+                    transcode = key == "t"
+                })
+            else
+               log.debug("input ignored: within cooldown.")
+            end
+
+            self.lp = love.timer.getTime()
         end
 
     elseif key == "c" then

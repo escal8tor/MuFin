@@ -325,11 +325,14 @@ function itemImage:new(props)
         id          = props.item.Id.."_"..props.type:lower(),
         itemId      = props.item.Id,
         imageType   = props.type,
-        icon        = props.item.IsFolder and "enter" or "play",
+        icon        = nil ~= props.icon and
+                        (props.icon) or
+                        (props.item.IsFolder and "enter" or "play"),
         width       = props.width,
         height      = props.height,
         fallback    = props.fallback,
         iconOpacity = 0.0,
+        circOpacity = 0.0,
         ovlyOpacity = 0.0,
         updated     = false,
         tween       = nil
@@ -419,6 +422,7 @@ end
 --- Initializes `tween` to fade the overlay and icon in gradually.
 --- Makes transition feel less abrupt/jarring.
 function itemImage:onFocus()
+    if not self.icon then return end
 
     if self.ovlyTween then
         self.ovlyTween:stop()
@@ -437,7 +441,7 @@ function itemImage:onFocus()
     end
 
     self.iconTween = self:getGroup(2)
-        :to(self, 0.1, { iconOpacity = 1.0 })
+        :to(self, 0.1, { iconOpacity = 1.0, circOpacity = 0.8 })
         :oncomplete(function() self.iconTween = nil end)
         :ease("linear")
         :delay(0.12)
@@ -448,7 +452,9 @@ end
 --- Same idea as `onFocus`, but inverted. Timing and order are adjusted 
 --- for visual appeal.
 function itemImage:onFocusLost()
+    if not self.icon then return end
     self.iconOpacity = 0.0
+    self.circOpacity = 0.0
 
     if self.ovlyTween then
         self.ovlyTween:stop()
@@ -491,14 +497,16 @@ end
 --- For example, play icon (right arrow) is shown for playable items. 
 function itemImage:drawIndicator(name)
     local icon = icons[name or self.icon]
-    local iconSize = icon:getHeight()
-    local iconCent = iconSize / 2
-    love.graphics.setColor(config.theme:color("IMAGE", "FOCUSED_CIRCLE", self.iconOpacity))
+    local radius = W_HEIGHT / 17 --icon:getHeight()
+    local iconScale = ((radius * 2) * 3/5) / icon:getHeight()
+    local iconCent = icon:getHeight() / 2
+
+    love.graphics.setColor(config.theme:color("IMAGE", "FOCUSED_CIRCLE", self.circOpacity))
     love.graphics.circle(
         "fill",
         self.x + (self.width/2),
         self.y + (self.height/2),
-        (iconSize*4/5)
+        radius
     )
     love.graphics.setColor(config.theme:color("IMAGE","FOCUSED_ICON", self.iconOpacity))
     love.graphics.draw(
@@ -506,8 +514,8 @@ function itemImage:drawIndicator(name)
         self.x + (self.width/2),
         self.y + (self.height/2),
         0,
-        1,
-        1,
+        iconScale,
+        iconScale,
         iconCent,
         iconCent
     )
@@ -593,7 +601,7 @@ function itemImage:draw()
     love.graphics.setStencilTest("greater", 0)
     self:drawImage()
 
-    if (self.ovlyTween ~= nil or self.parent.focused) then
+    if self.icon and (self.ovlyTween ~= nil or self.parent.focused) then
 
         if self.ovlyOpacity > 0.0 then
             self:drawOverlay()

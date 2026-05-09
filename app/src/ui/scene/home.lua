@@ -9,6 +9,16 @@ local text   = require "src.ui.component.text"
 local ui     = require "src.ui.scene"
 local utils  = require "src.external.utils"
 
+--#region variables
+
+local config = require("src.external.config").client
+
+local outerMargin = W_HEIGHT / 22
+local innerMargin = outerMargin * 0.38
+local textOffset = innerMargin / 5
+
+--#endregion variables
+
 --#region helpers
 
 --- Create component tree for user views.
@@ -18,8 +28,8 @@ local function getUserViews(viewData)
     local viewCards = scroll {
         type = "hz",
         id = "view_cards",
-        gap = 15,
-        width = W_WIDTH - 40,
+        gap = innerMargin,
+        width = W_WIDTH - outerMargin,
         bias = "center"
     }
 
@@ -32,14 +42,15 @@ local function getUserViews(viewData)
         viewCards = viewCards + card {
             item = item,
             width = width,
-            height = height
+            height = height,
+            gap = textOffset
         }
     end
 
     return (
         badr {
             column = true,
-            gap = 15
+            gap = innerMargin
         }
         + text {
             text = "My Media",
@@ -60,18 +71,35 @@ local function getRecentlyAdded(name, id, data)
     local recentCards = scroll {
         type = "hz",
         id = "recently_added_"..id,
-        gap = 15,
-        width = W_WIDTH - 40,
+        gap = innerMargin,
+        width = W_WIDTH - outerMargin,
         bias = "center"
     }
 
     for _, item in ipairs(data) do
-        local aspect
+        local aspect = 2/3
 
         if item.Type == "Episode" then
-            aspect = 4/3
-        else
-            aspect = 2/3
+            local pref = config:read("Recents","allowItems")
+            local ok
+
+            if pref == "yes" then
+                aspect = 4/3
+
+            elseif pref == "parent" then
+                ok, item = pcall(function()
+                    return client.item:getItem(item.SeriesId):decode()
+                end)
+
+                if not ok then
+                    goto continue
+                end
+
+            elseif pref == "shortcut" then
+                goto continue
+            else
+                goto continue
+            end
         end
 
         local width, height = utils.dimensions {
@@ -82,14 +110,17 @@ local function getRecentlyAdded(name, id, data)
         recentCards = recentCards + card {
             item = item,
             width = width,
-            height = height
+            height = height,
+            gap = textOffset
         }
+
+        ::continue::
     end
 
     return (
         badr {
             column = true,
-            gap = 15
+            gap = innerMargin
         }
         + text {
             text = "Recently added in "..name,
@@ -122,8 +153,8 @@ function home:load(data)
     local menu = scroll {
         id = "home_menu",
         type = "vt",
-        gap = 20,
-        height = W_HEIGHT - header.height - 40,
+        gap = outerMargin / 2,
+        height = W_HEIGHT - header.height - outerMargin,
         bias = "center",
         lockFocus = true
     }
@@ -145,7 +176,7 @@ function home:load(data)
     end
 
     local layer = badr:root { row = true } + menu
-    layer:updatePosition(20, header.height + 20)
+    layer:updatePosition((outerMargin / 2), header.height + (outerMargin / 2))
     layer:focusFirstElement()
     self:insertLayer(layer)
 end

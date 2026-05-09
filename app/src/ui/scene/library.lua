@@ -6,14 +6,6 @@ local header = require "src.ui.component.header"
 local ui     = require "src.ui.scene"
 local utils  = require "src.external.utils"
 
-local cardWidth
-
-if W_WIDTH == 1280 then
-    cardWidth = (W_WIDTH - 82) / 4
-else
-    cardWidth = (W_WIDTH - 62) / 3
-end
-
 --- @class library:scene
 local library = ui.scene {}
 library.__index = library
@@ -33,13 +25,20 @@ function library:load(data)
         }):decode()
     end)
 
+    local isWideAspect = (W_WIDTH / W_HEIGHT) > (4/3)
+    local gridWidth = isWideAspect and 4 or 3
+    local outerMargin = W_HEIGHT / 22
+    local innerMargin = outerMargin * 0.38
+    local cardWidth = (W_WIDTH - outerMargin - (innerMargin * (gridWidth - 1))) / gridWidth
+    local textOffset = innerMargin / 5
+
     local itemCards = grid {
-        id     = "library_grid",
-        type   = "vt",
-        width  = W_WIDTH - 0,
-        height = W_HEIGHT - header.height - 40,
-        gap    = 15,
-        bias   = "center"
+        id = "library_grid",
+        type = "vt",
+        width = W_WIDTH,
+        height = W_HEIGHT - header.height - outerMargin,
+        gap = innerMargin,
+        bias = "center"
     }
 
     for _,item in ipairs(itemData.Items) do
@@ -52,12 +51,13 @@ function library:load(data)
         itemCards = itemCards + card {
             item = item,
             width = width,
-            height = height
+            height = height,
+            gap = textOffset
         }
     end
 
     local layer = badr:root { row = true } + itemCards
-    layer:updatePosition(18, header.height + 20)
+    layer:updatePosition((outerMargin / 2), header.height + (outerMargin / 2))
     layer:focusFirstElement()
     self:insertLayer(layer)
 end

@@ -28,3 +28,4 @@ _G.device_resolutions = {
 
 W_WIDTH, W_HEIGHT = muos.getResolution()
 DEVICE_NAME = muos.getDeviceName()
+OS_NAME = "MustardOS"

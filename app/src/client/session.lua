@@ -31,7 +31,7 @@ end
 --- @return table json Response data
 function response:decode()
     local data = json.decode(nativefs.read(self.path))
-    os.execute("rm '"..self.path.."'")
+    -- os.execute("rm '"..self.path.."'")
     return data
 end
 

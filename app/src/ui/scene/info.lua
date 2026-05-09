@@ -3,6 +3,7 @@ local badr      = require "src.ui.component.badr"
 local button    = require "src.ui.component.button"
 local client    = require "src.client"
 local header    = require "src.ui.component.header"
+local image     = require "src.ui.component.image"
 local scroll    = require "src.ui.component.scroll"
 local select    = require "src.ui.component.select"
 local text      = require "src.ui.component.text"
@@ -34,22 +35,53 @@ function info:load(data)
         ):decode()
     end)
 
-    local layer = badr:root {}
+    local isWideAspect = (W_WIDTH/W_HEIGHT) > (4/3)
+    local outerMargin = W_HEIGHT / 22
+    local baseWidth = W_WIDTH - outerMargin
+    local imgWidth, imgHeight
+
+    if isWideAspect then
+        -- baseWidth = W_WIDTH * 3/5
+
+        if ( itemData.Type == "Movie" or
+             itemData.Type == "Series" or
+             itemData.Type == "Season" ) then
+
+            imgWidth, imgHeight = utils.dimensions {
+                height = W_HEIGHT - header.height - outerMargin,
+                aspect = 2/3
+            }
+
+            baseWidth = W_WIDTH - imgWidth - (outerMargin * 3/2)
+
+        elseif itemData.Type == "Episode" then
+            imgWidth, imgHeight = utils.dimensions {
+                width  = baseWidth * 0.45,
+                aspect = 4/3
+            }
+
+            baseWidth = W_WIDTH - imgWidth - (outerMargin * 3/2)
+        end
+    end
+
     local base = scroll {
-        id        = "info",
-        type      = "vt",
-        width     = W_WIDTH - 0,
-        height    = W_HEIGHT - header.height - 40,
-        gap       = 30,
-        bias      = "center"
+        id     = "info",
+        type   = "vt",
+        width  = baseWidth,
+        height = W_HEIGHT - header.height - outerMargin,
+        gap    = outerMargin * 2/3,
+        bias   = "center"
     }
-    + text {
+
+    local title =  text {
         id    = "title",
         text  = itemData.Name,
-        width = W_WIDTH - 40,
+        width = base.width,
         font  = "large",
         align = "left"
     }
+
+    base = base + title
 
     if itemData.MediaStreams then
         local streams = {}
@@ -88,7 +120,7 @@ function info:load(data)
             local streamsList = badr {
                 id     = "streams",
                 column = true,
-                gap    = 5,
+                gap    = (W_HEIGHT - header.height) / 96,
             }
 
             for _, streamType in ipairs({"Video","Audio","Subtitle"}) do
@@ -97,12 +129,12 @@ function info:load(data)
                     local label = streamType:lower()
                     local streamSelect = select.hzScr(
                         streams[streamType],
-                        { id = label.."_streams", width =  W_WIDTH - 140 }
+                        { id = label.."_streams", width = base.width * 0.85 }
                     )
 
                     streamsList = streamsList + (
                         badr { id = label.."_container", row = true, gap = 0 }
-                        + text { id = label.."_label", text = streamType, width = 100 }
+                        + text { id = label.."_label", text = streamType, width = base.width * 0.15 }
                         + streamSelect
                     )
                 end
@@ -116,7 +148,7 @@ function info:load(data)
         base = base + text {
             id    = "tagline",
             text  = itemData.Taglines[1],
-            width = W_WIDTH - 40,
+            width = base.width,
             wrap  = true,
             font  = "normal",
             align = "left"
@@ -127,7 +159,7 @@ function info:load(data)
         local overview = accordion {
             id    = "overview",
             text  = itemData.Overview,
-            width = W_WIDTH - 40,
+            width = base.width,
             wrap  = 8,
             align = "left"
         }
@@ -149,7 +181,7 @@ function info:load(data)
             local label = text {
                 text  = "Genres",
                 align = "left",
-                width = 100
+                width = base.width * 0.15
             }
 
             miscInfo = miscInfo + (
@@ -162,7 +194,7 @@ function info:load(data)
                     text  = table.concat(itemData.Genres, ", "),
                     align = "left",
                     color = "primary",
-                    width = W_WIDTH - label.width - 40,
+                    width = base.width - label.width,
                     wrap  = 2
                 }
             )
@@ -172,7 +204,7 @@ function info:load(data)
             local label = text {
                 text  = "Studios",
                 align = "left",
-                width = 100
+                width = base.width * 0.15
             }
 
             local studios = {}
@@ -191,7 +223,7 @@ function info:load(data)
                     text  = table.concat(studios, ", "),
                     align = "left",
                     color = "primary",
-                    width = W_WIDTH - label.width - 40,
+                    width = base.width - label.width,
                     wrap  = 2
                 }
             )
@@ -200,8 +232,37 @@ function info:load(data)
         base = base + miscInfo
     end
 
-    layer = layer + base
-    layer:updatePosition(20, header.height + 20)
+    local layer = badr:root {}
+
+    if isWideAspect then
+
+        local imageProps = {
+            item   = itemData,
+            type   = "Primary",
+            width  = imgWidth,
+            height = imgHeight,
+            icon   = false,
+            fit    = "fitHeight"
+        }
+
+        if itemData.seriesId then
+            imageProps.fallback = "/data/cache/"..itemData.seriesId.."/primary.png"
+        end
+
+        layer = layer + (
+            badr {
+                width = W_WIDTH - outerMargin,
+                row = true,
+                gap = outerMargin / 2
+            }
+            + image:forItem(imageProps)
+            + base
+        )
+    else
+        layer = layer + base
+    end
+
+    layer:updatePosition(outerMargin / 2, header.height + (outerMargin / 2))
     layer:focusFirstElement()
     self:insertLayer(layer)
 end

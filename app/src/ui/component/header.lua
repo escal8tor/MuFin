@@ -115,7 +115,9 @@ function header.load()
     header.height = W_HEIGHT / 12
     local alt = 24
 
-    if W_HEIGHT == 480 then
+    if W_HEIGHT == 1080 then
+        alt = 24
+    elseif W_HEIGHT == 480 then
         alt = 16
     end
 
@@ -183,7 +185,9 @@ end
 
 local y = 12
 
-if W_HEIGHT == 480 then
+if W_HEIGHT == 1080 then
+    y = 12
+elseif W_HEIGHT == 480 then
     y = 8
 end
 

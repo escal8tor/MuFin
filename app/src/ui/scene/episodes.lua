@@ -26,22 +26,25 @@ function episodes:load(data)
         ):decode()
     end)
 
+    local outerMargin = W_HEIGHT / 22
+    local innerMargin = outerMargin * 0.38
+
     local list = scroll {
-        id        = "episodes",
-        type      = "vt",
-        width     = W_WIDTH - 0,
-        height    = W_HEIGHT - header.height - 40,
-        gap       = 15,
-        bias      = "center",
+        id = "episodes",
+        type  = "vt",
+        width = W_WIDTH - outerMargin,
+        height = W_HEIGHT - header.height - outerMargin,
+        gap = innerMargin,
+        bias = "center",
         lockFocus = true,
     }
 
     for _, item in ipairs(response.Items) do
-        list = list + episode(item)
+        list = list + episode(item, {})
     end
 
     local layer = badr:root { row = true } + list
-    layer:updatePosition(18, header.height + 20)
+    layer:updatePosition((outerMargin / 2), header.height + (outerMargin / 2))
     layer:focusFirstElement()
     self:insertLayer(layer)
 end
