@@ -101,31 +101,28 @@ function input.getBtnIcon(value)
 end
 
 local header = {
-    layout_left = badr:root { row = true, gap = 10 },
-    layout_right = badr:root { row = true, gap = 10 },
-    width = 0,
-    height = 0
+    layout_left = badr:root { row = true, gap = W_HEIGHT / 160 },
+    layout_right = badr:root { row = true, gap = W_HEIGHT / 160 },
+    width = W_WIDTH,
+    height = W_HEIGHT / 12,
+    logo = love.graphics.newImage("res/image/jellyfin_icon.png"),
+    dirty = true,
 }
 
-local logo, logo_scale
+local outerMargin = W_HEIGHT / 22
+
+header.logoMargin = header.height / 3
+header.logoScale = (header.height - header.logoMargin) / header.logo:getHeight()
+
 
 function header.load()
-    logo = love.graphics.newImage("res/image/jellyfin_icon.png")
-    header.width = W_WIDTH
-    header.height = W_HEIGHT / 12
-    local alt = 24
-
-    if W_HEIGHT == 1080 then
-        alt = 24
-    elseif W_HEIGHT == 480 then
-        alt = 16
-    end
-
-    logo_scale = (header.height - alt) / logo:getHeight()
+    header.canvas = love.graphics.newCanvas(header.width, header.height, {})
+    header.stencil = love.graphics.newCanvas(header.width, header.height, {format = "depth24stencil8"})
 end
 
 function header.reset()
-    header.layout_left = badr:root { row = true, gap = 15 }
+    header.layout_left = badr:root { row = true, gap = W_HEIGHT / 48 }
+    header.dirty = true
 end
 
 --- Add help text for a button.
@@ -133,23 +130,16 @@ end
 --- @param txt string text to display
 function header.append(btn, txt)
     local id = btn:lower()
-    local off1, off2
-
-    if W_HEIGHT == 480 then
-        off1, off2 = 0, 0
-    else
-        off1, off2 = 2, -4
-    end
 
     header.layout_left = header.layout_left + (
         badr {
-            y = header.layout_left.y + off1,
+            y = header.layout_left.y,
             id = id.."_hint",
             row = true,
-            gap = 5
+            gap = W_HEIGHT / 160
         }
         + text {
-            y = header.layout_left.y + off2,
+            y = header.layout_left.y,
             id = id.."_sym",
             text = input.getBtnIcon(btn).sym,
             font = "prompt",
@@ -162,6 +152,8 @@ function header.append(btn, txt)
             color = "HEADER:HINT_TEXT",
         }
     )
+
+    header.dirty = true
 end
 
 function header.extend(map)
@@ -175,28 +167,51 @@ function header.extend(map)
     for i=1, #btns do
         header.append(btns[i], map[btns[i]])
     end
+
+    header.dirty = true
 end
 
 function header.updatePosition(xPos, yPos)
-    xPos = xPos or W_WIDTH - header.layout_left.width - 20
+    xPos = W_WIDTH - header.layout_left.width - (outerMargin / 2)
     yPos = (header.height - header.layout_left.height) / 2
     header.layout_left:updatePosition(xPos, yPos)
 end
 
-local y = 12
-
-if W_HEIGHT == 1080 then
-    y = 12
-elseif W_HEIGHT == 480 then
-    y = 8
-end
-
 function header:draw()
-    love.graphics.setColor(configs.theme:color("HEADER","BACKGROUND"))
-    love.graphics.rectangle("fill", 0, 0, header.width, header.height)
-    header.layout_left:draw()
-    love.graphics.setColor(configs.theme:color("HEADER","LOGO"))
-    love.graphics.draw(logo, 20, y, 0, logo_scale, logo_scale)
+
+    if header.dirty then
+        love.graphics.push()
+
+        love.graphics.setCanvas({ header.canvas, stencil = header.stencil })
+        love.graphics.clear(0, 0, 0, 0)
+
+        love.graphics.setColor(configs.theme:color("HEADER","BACKGROUND"))
+        love.graphics.rectangle("fill", 0, 0, header.width, header.height)
+
+        love.graphics.setColorMask(true, true, true, false)
+
+        header.layout_left:draw()
+        love.graphics.setColor(configs.theme:color("HEADER","LOGO"))
+
+        love.graphics.draw(
+            header.logo,
+            outerMargin / 2,
+            header.logoMargin / 2,
+            0,
+            header.logoScale,
+            header.logoScale
+        )
+
+        love.graphics.setColorMask(true, true, true, true)
+        love.graphics.setCanvas()
+        love.graphics.pop()
+        header.dirty = false
+    end
+
+    love.graphics.setBlendMode("alpha", "premultiplied")
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.draw(header.canvas, 0, 0)
+    love.graphics.setBlendMode("alpha")
 end
 
 return header

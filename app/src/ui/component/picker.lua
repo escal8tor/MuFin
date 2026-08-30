@@ -1,5 +1,6 @@
 ---@diagnostic disable: cast-local-type
 local badr   = require "src.ui.component.badr"
+local configs = require "src.external.config"
 local fonts  = require "src.ui.component.font"
 local header = require "src.ui.component.header"
 local scroll = require "src.ui.component.scroll"
@@ -9,7 +10,7 @@ local ui     = require "src.ui.scene"
 --#region pickerOption
 
 --- @class pickerOption : badr
---- 
+---
 --- THEMING
 --- @field normalFg  string Normal text color
 --- @field normalBg  string Normal background color
@@ -17,11 +18,11 @@ local ui     = require "src.ui.scene"
 --- @field focusedBg string Focused background color
 --- @field font      string Font name
 --- @field align     align  Text alignment
---- 
+---
 --- PROPERTIES
 --- @field content string Discriptive text for selection
 --- @field value   any    Value the component represents
---- 
+---
 local pickerOption = badr {}
 pickerOption.__index = pickerOption
 
@@ -77,7 +78,16 @@ function pickerOption:setWidth(width)
 end
 
 function pickerOption:onKeyPress(key)
-    self.parent:onKeyPress(key)
+    -- If the key is a selection key (like "x"), trigger selection
+    if key == "x" then
+        if self.parent and self.parent.onSelect then
+            self.parent:onSelect(self.value)
+        end
+        return true
+    end
+
+    -- Let the parent handle navigation
+    return self.parent:onKeyPress(key)
 end
 
 function pickerOption:draw()
@@ -96,9 +106,9 @@ function pickerOption:draw()
         true
     )
     love.graphics.setStencilTest("greater", 1)
-    love.graphics.setColor(config.theme:color(colorBg))
+    love.graphics.setColor(configs.theme:color(colorBg))
     love.graphics.rectangle("fill", self.x, self.y, self.width, self.height, self.cr, self.cr)
-    love.graphics.setColor(config.theme:color(colorFg))
+    love.graphics.setColor(configs.theme:color(colorFg))
     love.graphics.printf(
         self.content:sub(1, self.sEnd)..(self.sEnd and "..." or ""),
         self.x + self.lmg,
@@ -116,7 +126,7 @@ end
 
 --- @class picker : scroll
 ---
---- Input UI component for choosing from a pre-defined set of options 
+--- Input UI component for choosing from a pre-defined set of options
 local picker = scroll {}
 picker.__index = picker
 
@@ -128,7 +138,13 @@ function picker:new(props, options)
         type      = "hz",
         bias      = "lazy",
         duration  = 0,
-        focusable = false
+        focusable = false,
+        onSelect  = props.onSelect, -- Callback when an option is selected
+        selectedValue = nil, -- Currently selected value
+        normalFg  = props.normalFg or "PICKER:NORMAL_FG",
+        normalBg  = props.normalBg or "PICKER:NORMAL_BG",
+        focusedFg = props.focusedFg or "PICKER:FOCUSED_FG",
+        focusedBg = props.focusedBg or "PICKER:FOCUSED_BG",
     }
 
     for key, value in pairs(props) do
@@ -174,6 +190,36 @@ function picker.__add(self, other)
     return updated
 end
 
+function picker:onSelect(value)
+    -- Callback when an option is selected
+    self.selectedValue = value
+    if self.onSelect then
+        self.onSelect(value)
+    end
+end
+
+function picker:onKeyPress(key)
+    local focused = self:getRoot().focusedElement
+
+    -- If we're focused on a child pickerOption, handle navigation
+    if focused and focused.parent == self then
+        -- Let the default scroll navigation work for moving between options
+        return scroll.onKeyPress(self, key)
+    end
+
+    -- Handle selection when pressing "x"
+    if key == "x" then
+        local focusedChild = self:getRoot().focusedElement
+        if focusedChild and focusedChild.parent == self then
+            self:onSelect(focusedChild.value)
+            return true
+        end
+    end
+
+    -- Let the parent handle other keys
+    return scroll.onKeyPress(self, key)
+end
+
 function picker:draw()
     love.graphics.push()
     love.graphics.stencil(
@@ -183,7 +229,7 @@ function picker:draw()
     )
     love.graphics.setStencilTest("greater", 0)
     love.graphics.translate(-self.vx, -self.vy)
-    love.graphics.setColor(config.theme:color(self.bgColor))
+    love.graphics.setColor(configs.theme:color(self.bgColor))
     love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
     love.graphics.setColor(1,1,1,1)
 
@@ -204,29 +250,30 @@ end
 
 local exports = {}
 
+--- @overload fun(table):picker
+exports = setmetatable({}, { __call = function(t, ...) return picker:new(...) end, __index = picker })
+
+-- Set the streamPicker method after exports is fully constructed
+exports.streamPicker = function(t, ...) return exports:newStreamPicker(...) end
+
+-- Define the newStreamPicker method after exports is fully constructed
 function exports:newStreamPicker(streams, props)
     local options = {}
 
     for _, stream in ipairs(streams) do
-        options = options + {
+        table.insert(options, {
             id        = stream.Type:lower().."_"..tostring(stream.Index),
             stype     = stream.Type,
             index     = stream.Index,
             isDefault = stream.IsDefault,
             label     = stream.DisplayTitle,
             value     = stream.Index
-        }
+        })
     end
 
     return picker:new(props, options)
 end
 
 --#endregion exports
-
---- @overload fun(table):picker
-exports = etmetatable(
-    { streamPicker = function(t, ...) return newStreamPicker(...) end },
-    { __call = function(t, ...) return picker:new(...) end, __index = picker }
-)
 
 return exports

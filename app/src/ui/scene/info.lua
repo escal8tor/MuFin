@@ -4,6 +4,7 @@ local button    = require "src.ui.component.button"
 local client    = require "src.client"
 local header    = require "src.ui.component.header"
 local image     = require "src.ui.component.image"
+local picker    = require "src.ui.component.picker"
 local scroll    = require "src.ui.component.scroll"
 local select    = require "src.ui.component.select"
 local text      = require "src.ui.component.text"
@@ -83,6 +84,115 @@ function info:load(data)
 
     base = base + title
 
+    -- Add episode-specific information for episodes
+    if itemData.Type == "Episode" then
+        local episodeInfo = badr {
+            id = "episode_info",
+            column = true,
+            gap = 5
+        }
+
+        -- Season and Episode numbers
+        if itemData.ParentIndexNumber and itemData.IndexNumber then
+            local seasonEpText = text {
+                text = string.format("Season %d, Episode %d", itemData.ParentIndexNumber, itemData.IndexNumber),
+                width = base.width,
+                font = "normal",
+                align = "left"
+            }
+            episodeInfo = episodeInfo + seasonEpText
+        end
+
+        -- Air date
+        if itemData.PremiereDate then
+            local airDateText = text {
+                text = "Air Date: " .. os.date("%Y-%m-%d", os.time(utils.parseISODate(itemData.PremiereDate))),
+                width = base.width,
+                font = "normal",
+                align = "left"
+            }
+            episodeInfo = episodeInfo + airDateText
+        end
+
+        -- Production year
+        if itemData.ProductionYear then
+            local yearText = text {
+                text = "Production Year: " .. tostring(itemData.ProductionYear),
+                width = base.width,
+                font = "normal",
+                align = "left"
+            }
+            episodeInfo = episodeInfo + yearText
+        end
+
+        -- Director (if available)
+        if itemData.Directors and #itemData.Directors > 0 then
+            local directorText = text {
+                text = "Director: " .. table.concat(itemData.Directors, ", "),
+                width = base.width,
+                font = "normal",
+                align = "left"
+            }
+            episodeInfo = episodeInfo + directorText
+        end
+
+        -- Writers (if available)
+        if itemData.Writers and #itemData.Writers > 0 then
+            local writersText = text {
+                text = "Writers: " .. table.concat(itemData.Writers, ", "),
+                width = base.width,
+                font = "normal",
+                align = "left"
+            }
+            episodeInfo = episodeInfo + writersText
+        end
+
+        -- Cast (actors) - if available
+        if itemData.People and #itemData.People > 0 then
+            local castItems = {}
+            for _, person in ipairs(itemData.People) do
+                if person.Type == "Actor" or person.Type == "GuestStar" then
+                    table.insert(castItems, person.Name)
+                end
+            end
+
+            if #castItems > 0 then
+                local castText = text {
+                    text = "Cast: " .. table.concat(castItems, ", "),
+                    width = base.width,
+                    font = "normal",
+                    align = "left"
+                }
+                episodeInfo = episodeInfo + castText
+            end
+        end
+
+        -- Guest stars (if available)
+        if itemData.People and #itemData.People > 0 then
+            local guestStars = {}
+            for _, person in ipairs(itemData.People) do
+                if person.Type == "GuestStar" then
+                    table.insert(guestStars, person.Name)
+                end
+            end
+
+            if #guestStars > 0 then
+                local guestText = text {
+                    text = "Guest Stars: " .. table.concat(guestStars, ", "),
+                    width = base.width,
+                    font = "normal",
+                    align = "left"
+                }
+                episodeInfo = episodeInfo + guestText
+            end
+        end
+
+        -- Add the episode info section to the main content
+        if #episodeInfo.children > 0 then
+            base = base + episodeInfo
+        end
+    end
+
     if itemData.MediaStreams then
         local streams = {}
 
@@ -127,15 +237,21 @@ function info:load(data)
 
                 if streams[streamType] ~= nil then
                     local label = streamType:lower()
-                    local streamSelect = select.hzScr(
+                    -- Replace select.hzScr with picker
+                    local streamPicker = picker.streamPicker(
                         streams[streamType],
                         { id = label.."_streams", width = base.width * 0.85 }
                     )
 
+                    -- Add onSelect handler to update selected stream
+                    streamPicker.onSelect = function(value)
+                        selected.streams[streamType] = value
+                    end
+
                     streamsList = streamsList + (
                         badr { id = label.."_container", row = true, gap = 0 }
                         + text { id = label.."_label", text = streamType, width = base.width * 0.15 }
-                        + streamSelect
+                        + streamPicker
                     )
                 end
             end

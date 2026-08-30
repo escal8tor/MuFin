@@ -77,12 +77,12 @@ end)
 
 --- @class image : badr
 --- 
---- @field protected data      love.Image? Drawable (when loaded)
---- @field protected imgWidth  number      Image width
---- @field protected imgHeight number      Image height
---- @field protected radius    number      Image corner radius
---- @field protected scaleX    number      Image scale factor X
---- @field protected scaleY    number      Image scale factor Y
+--- @field protected data         love.Image? Drawable (when loaded)
+--- @field protected imgWidth     number      Image width
+--- @field protected imgHeight    number      Image height
+--- @field protected cornerRadius number      Image corner radius
+--- @field protected scaleX       number      Image scale factor X
+--- @field protected scaleY       number      Image scale factor Y
 --- 
 --- @field loading  boolean Set while image is loading
 --- @field updated  boolean Set once image path has been set
@@ -103,23 +103,23 @@ function image:new(props)
     props = props or {}
 
     local proto = {
-        path      = props.path,
-        fallback  = props.fallback,
-        id        = props.id or tostring(love.timer.getTime()),
-        x         = props.x or 0,
-        y         = props.y or 0,
-        width     = props.width,
-        height    = props.height,
-        radius    = props.cr or 3,
-        focusable = props.focusable,
-        fit       = props.fit or "fill",
-        visible   = false,
-        data      = nil,
-        imgWidth  = nil,
-        imgHeight = nil,
-        scaleX    = nil,
-        scaleY    = nil,
-        loading   = false
+        path         = props.path,
+        fallback     = props.fallback,
+        id           = props.id or tostring(love.timer.getTime()),
+        x            = props.x or 0,
+        y            = props.y or 0,
+        width        = props.width,
+        height       = props.height,
+        cornerRadius = props.cr or (W_HEIGHT / 160),
+        focusable    = props.focusable,
+        fit          = props.fit or "fill",
+        visible      = false,
+        data         = nil,
+        imgWidth     = nil,
+        imgHeight    = nil,
+        scaleX       = nil,
+        scaleY       = nil,
+        loading      = false
     }
 
 
@@ -180,8 +180,8 @@ function image:draw()
                 self.y,
                 self.width,
                 self.height,
-                self.radius,
-                self.radius
+                self.cornerRadius,
+                self.cornerRadius
             )
         end,
         "replace",
@@ -484,8 +484,8 @@ function itemImage:drawOverlay()
         self.y,
         self.width,
         self.height,
-        self.radius,
-        self.radius
+        self.cornerRadius,
+        self.cornerRadius
     )
     love.graphics.setColor(1, 1, 1, 1)
 end
@@ -591,8 +591,8 @@ function itemImage:draw()
                 self.y,
                 self.width,
                 self.height,
-                self.radius,
-                self.radius
+                self.cornerRadius,
+                self.cornerRadius
             )
         end,
         "replace",

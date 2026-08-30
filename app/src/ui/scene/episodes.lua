@@ -40,7 +40,7 @@ function episodes:load(data)
     }
 
     for _, item in ipairs(response.Items) do
-        list = list + episode(item, {})
+        list = list + episode(item, { gap = innerMargin })
     end
 
     local layer = badr:root { row = true } + list

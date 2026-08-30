@@ -211,28 +211,38 @@ function themeConfig:load()
 end
 
 --- Returns color defiend in theme by name.
---- 
+---
 --- @param section  string  Config section
 --- @param key      string  Color key
 --- @param alpha    number? Alpha value (0-1)
---- 
+---
 --- @return color color RGBA color value
 --- @overload fun(self, id: string, alpha: number?): color
 function themeConfig:color(section, key, alpha)
     local value
 
-    if section[1] == "#" then
+    if type(section) == "string" and section[1] == "#" then
         return utils.hex2color(section)
 
     elseif key == nil or type(key) == "number" then
         alpha = key
 
-        if section:sub(1,1) == "#" then
+        if type(section) == "string" and section:sub(1,1) == "#" then
             value = utils.hex2color(section)
             goto skip
         end
 
-        section, key = unpack(utils.split(section, ":"))
+        local parts = utils.split(section, ":")
+        if #parts >= 2 then
+            section, key = parts[1], parts[2]
+        else
+            -- If no colon found, treat as direct hex color or return nil
+            if type(section) == "string" and section:sub(1,1) == "#" then
+                return utils.hex2color(section)
+            else
+                return nil
+            end
+        end
     end
 
     value = self:read(section, key)
